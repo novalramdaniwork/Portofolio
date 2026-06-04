@@ -582,113 +582,219 @@ footer {
     <h2 class="section-title">Architecture</h2>
   </div>
 
-  <div class="arch-container fade-in">
+  <div class="arch-container fade-in" id="archContainer">
     <div class="arch-label">Cluster Architecture · High Availability Design</div>
-    <svg class="arch-diagram" viewBox="0 0 900 420" fill="none" xmlns="http://www.w3.org/2000/svg">
 
-      <!-- Background zones -->
-      <rect x="20" y="40" width="260" height="340" rx="6" fill="rgba(45,106,79,0.04)" stroke="rgba(45,106,79,0.2)" stroke-width="1" stroke-dasharray="4 3"/>
-      <text x="150" y="30" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#9a9a94" letter-spacing="2">CONTROL PLANE</text>
+    <!-- Replay button -->
+    <button id="replayBtn" onclick="runArchAnimation()" style="
+      position:absolute; top:14px; right:16px;
+      font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.08em;
+      color:var(--accent); background:var(--accent-light); border:var(--line-accent);
+      padding:5px 12px; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:5px;
+    "><i class="ti ti-refresh" style="font-size:12px"></i>Replay</button>
 
-      <rect x="310" y="40" width="570" height="340" rx="6" fill="rgba(26,82,118,0.03)" stroke="rgba(26,82,118,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
-      <text x="595" y="30" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#9a9a94" letter-spacing="2">WORKER NODES</text>
-
-      <!-- Control Plane Nodes -->
-      <!-- CP1 -->
-      <rect x="40" y="60" width="80" height="80" rx="6" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1.5"/>
-      <text x="80" y="95" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f" font-weight="500">MASTER</text>
-      <text x="80" y="110" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">NODE 1</text>
-      <circle cx="80" cy="125" r="3" fill="#2d6a4f" opacity="0.6"/>
-
-      <!-- CP2 -->
-      <rect x="130" y="60" width="80" height="80" rx="6" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1.5"/>
-      <text x="170" y="95" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f" font-weight="500">MASTER</text>
-      <text x="170" y="110" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">NODE 2</text>
-      <circle cx="170" cy="125" r="3" fill="#2d6a4f" opacity="0.6"/>
-
-      <!-- CP3 -->
-      <rect x="40" y="160" width="80" height="80" rx="6" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1.5"/>
-      <text x="80" y="195" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f" font-weight="500">MASTER</text>
-      <text x="80" y="210" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">NODE 3</text>
-      <circle cx="80" cy="225" r="3" fill="#2d6a4f" opacity="0.6"/>
-
-      <!-- etcd label -->
-      <rect x="40" y="270" width="170" height="30" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
-      <text x="125" y="290" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#2d6a4f">etcd cluster (quorum: 2/3)</text>
-
-      <!-- Flannel CNI -->
-      <rect x="40" y="315" width="170" height="28" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
-      <text x="125" y="333" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#2d6a4f">Flannel CNI</text>
-
-      <!-- Lines CP to CP -->
-      <line x1="120" y1="100" x2="130" y2="100" stroke="rgba(45,106,79,0.4)" stroke-width="1" stroke-dasharray="3 2"/>
-      <line x1="80" y1="140" x2="80" y2="160" stroke="rgba(45,106,79,0.4)" stroke-width="1" stroke-dasharray="3 2"/>
-      <line x1="170" y1="140" x2="120" y2="160" stroke="rgba(45,106,79,0.4)" stroke-width="1" stroke-dasharray="3 2"/>
-
-      <!-- Worker nodes -->
-      <!-- Node 1+2 - Database -->
-      <rect x="330" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
-      <text x="375" y="90" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 1</text>
-      <text x="375" y="104" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">database</text>
-      <text x="375" y="118" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">+ services</text>
-
-      <rect x="430" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
-      <text x="475" y="90" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 2</text>
-      <text x="475" y="104" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">database</text>
-      <text x="475" y="118" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">+ services</text>
-
-      <!-- Node 3+4 - Services -->
-      <rect x="530" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
-      <text x="575" y="90" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 3</text>
-      <text x="575" y="104" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">services</text>
-      <text x="575" y="118" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">only</text>
-
-      <rect x="630" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
-      <text x="675" y="90" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 4</text>
-      <text x="675" y="104" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">services</text>
-      <text x="675" y="118" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">only</text>
-
-      <!-- Node 5 - All labels -->
-      <rect x="730" y="60" width="120" height="70" rx="5" fill="rgba(108,52,131,0.08)" stroke="rgba(108,52,131,0.3)" stroke-width="1.5"/>
-      <text x="790" y="88" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#6c3483" font-weight="500">NODE 5</text>
-      <text x="790" y="102" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#6c3483">all-labels</text>
-      <text x="790" y="116" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">overflow / fallback</text>
-
-      <!-- HPA boxes under workers -->
-      <rect x="330" y="155" width="190" height="28" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
-      <text x="425" y="173" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">HPA · auto-scale on CPU/mem</text>
-
-      <rect x="530" y="155" width="320" height="28" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
-      <text x="690" y="173" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">HPA · auto-scale + Node 5 fallback</text>
-
-      <!-- NodeSelector labels -->
-      <rect x="330" y="200" width="520" height="24" rx="4" fill="rgba(26,82,118,0.05)" stroke="rgba(26,82,118,0.15)" stroke-width="1"/>
-      <text x="590" y="216" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276">nodeSelector · workload=database | workload=service | workload=all</text>
-
-      <!-- Connection from CP to workers -->
-      <line x1="280" y1="100" x2="330" y2="100" stroke="rgba(45,106,79,0.5)" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <svg id="archSvg" class="arch-diagram" viewBox="0 0 900 420" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L6,3 z" fill="rgba(45,106,79,0.5)"/>
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(45,106,79,0.6)"/>
         </marker>
       </defs>
 
-      <!-- Persistent storage note -->
-      <rect x="330" y="250" width="520" height="50" rx="4" fill="rgba(45,106,79,0.04)" stroke="rgba(45,106,79,0.15)" stroke-width="1"/>
-      <text x="345" y="272" font-family="'DM Mono',monospace" font-size="9" fill="#5a5a54">Persistent Volume Claims (PVC)</text>
-      <text x="345" y="288" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Stateful workloads bound to specific nodes via nodeAffinity</text>
+      <!-- STEP 1: Zone backgrounds -->
+      <g id="az-cp" opacity="0">
+        <rect x="20" y="40" width="260" height="340" rx="6" fill="rgba(45,106,79,0.04)" stroke="rgba(45,106,79,0.2)" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="150" y="30" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#9a9a94" letter-spacing="2">CONTROL PLANE</text>
+      </g>
+      <g id="az-worker" opacity="0">
+        <rect x="310" y="40" width="570" height="340" rx="6" fill="rgba(26,82,118,0.03)" stroke="rgba(26,82,118,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="595" y="30" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#9a9a94" letter-spacing="2">WORKER NODES</text>
+      </g>
 
-      <!-- Legend -->
-      <rect x="330" y="320" width="12" height="12" rx="2" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1"/>
-      <text x="350" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Control Plane</text>
-      <rect x="450" y="320" width="12" height="12" rx="2" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1"/>
-      <text x="470" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Worker Node</text>
-      <rect x="570" y="320" width="12" height="12" rx="2" fill="rgba(108,52,131,0.08)" stroke="rgba(108,52,131,0.3)" stroke-width="1"/>
-      <text x="590" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Fallback Node</text>
-      <rect x="690" y="320" width="12" height="12" rx="2" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
-      <text x="710" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">HPA / Policies</text>
+      <!-- STEP 2: CP Node 1 -->
+      <g id="cp1" opacity="0" transform="translate(0,8)">
+        <rect x="40" y="60" width="80" height="80" rx="6" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1.5"/>
+        <text x="80" y="95" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f" font-weight="500">MASTER</text>
+        <text x="80" y="110" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">NODE 1</text>
+        <circle cx="80" cy="125" r="3" fill="#2d6a4f" opacity="0.6"/>
+      </g>
+
+      <!-- STEP 3: CP Node 2 -->
+      <g id="cp2" opacity="0" transform="translate(0,8)">
+        <rect x="130" y="60" width="80" height="80" rx="6" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1.5"/>
+        <text x="170" y="95" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f" font-weight="500">MASTER</text>
+        <text x="170" y="110" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">NODE 2</text>
+        <circle cx="170" cy="125" r="3" fill="#2d6a4f" opacity="0.6"/>
+        <line x1="120" y1="100" x2="130" y2="100" stroke="rgba(45,106,79,0.4)" stroke-width="1" stroke-dasharray="3 2"/>
+      </g>
+
+      <!-- STEP 4: CP Node 3 -->
+      <g id="cp3" opacity="0" transform="translate(0,8)">
+        <rect x="40" y="160" width="80" height="80" rx="6" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1.5"/>
+        <text x="80" y="195" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f" font-weight="500">MASTER</text>
+        <text x="80" y="210" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">NODE 3</text>
+        <circle cx="80" cy="225" r="3" fill="#2d6a4f" opacity="0.6"/>
+        <line x1="80" y1="140" x2="80" y2="160" stroke="rgba(45,106,79,0.4)" stroke-width="1" stroke-dasharray="3 2"/>
+        <line x1="170" y1="140" x2="120" y2="160" stroke="rgba(45,106,79,0.4)" stroke-width="1" stroke-dasharray="3 2"/>
+      </g>
+
+      <!-- STEP 5: etcd + Flannel -->
+      <g id="cp-infra" opacity="0" transform="translate(0,6)">
+        <rect x="40" y="270" width="170" height="30" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
+        <text x="125" y="290" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#2d6a4f">etcd cluster (quorum: 2/3)</text>
+        <rect x="40" y="315" width="170" height="28" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
+        <text x="125" y="333" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#2d6a4f">Flannel CNI</text>
+      </g>
+
+      <!-- STEP 6: Arrow CP → Worker -->
+      <g id="cp-arrow" opacity="0">
+        <line x1="280" y1="95" x2="328" y2="95" stroke="rgba(45,106,79,0.6)" stroke-width="2" marker-end="url(#arrow)"/>
+      </g>
+
+      <!-- STEP 7: Worker Node 1 -->
+      <g id="w1" opacity="0" transform="translate(-10,0)">
+        <rect x="330" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
+        <text x="375" y="88" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 1</text>
+        <text x="375" y="102" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">database</text>
+        <text x="375" y="116" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">+ services</text>
+      </g>
+
+      <!-- STEP 8: Worker Node 2 -->
+      <g id="w2" opacity="0" transform="translate(-10,0)">
+        <rect x="430" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
+        <text x="475" y="88" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 2</text>
+        <text x="475" y="102" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">database</text>
+        <text x="475" y="116" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">+ services</text>
+      </g>
+
+      <!-- STEP 9: Worker Node 3 -->
+      <g id="w3" opacity="0" transform="translate(-10,0)">
+        <rect x="530" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
+        <text x="575" y="88" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 3</text>
+        <text x="575" y="102" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">services</text>
+        <text x="575" y="116" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">only</text>
+      </g>
+
+      <!-- STEP 10: Worker Node 4 -->
+      <g id="w4" opacity="0" transform="translate(-10,0)">
+        <rect x="630" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
+        <text x="675" y="88" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 4</text>
+        <text x="675" y="102" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">services</text>
+        <text x="675" y="116" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">only</text>
+      </g>
+
+      <!-- STEP 11: Worker Node 5 (fallback) -->
+      <g id="w5" opacity="0" transform="translate(-10,0)">
+        <rect x="730" y="60" width="120" height="70" rx="5" fill="rgba(108,52,131,0.08)" stroke="rgba(108,52,131,0.4)" stroke-width="2"/>
+        <text x="790" y="86" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#6c3483" font-weight="500">NODE 5</text>
+        <text x="790" y="100" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#6c3483">all-labels</text>
+        <text x="790" y="114" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">overflow / fallback</text>
+      </g>
+
+      <!-- STEP 12: HPA bars -->
+      <g id="hpa" opacity="0">
+        <rect x="330" y="155" width="190" height="28" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
+        <text x="425" y="173" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">HPA · auto-scale on CPU/mem</text>
+        <rect x="530" y="155" width="320" height="28" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
+        <text x="690" y="173" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">HPA · auto-scale + Node 5 fallback</text>
+      </g>
+
+      <!-- STEP 13: NodeSelector bar -->
+      <g id="nodeselector" opacity="0">
+        <rect x="330" y="200" width="520" height="24" rx="4" fill="rgba(26,82,118,0.05)" stroke="rgba(26,82,118,0.2)" stroke-width="1"/>
+        <text x="590" y="216" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276">nodeSelector · workload=database | workload=service | workload=all</text>
+      </g>
+
+      <!-- STEP 14: PVC -->
+      <g id="pvc" opacity="0">
+        <rect x="330" y="250" width="520" height="50" rx="4" fill="rgba(45,106,79,0.04)" stroke="rgba(45,106,79,0.15)" stroke-width="1"/>
+        <text x="345" y="272" font-family="'DM Mono',monospace" font-size="9" fill="#5a5a54">Persistent Volume Claims (PVC)</text>
+        <text x="345" y="288" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Stateful workloads bound to specific nodes via nodeAffinity</text>
+      </g>
+
+      <!-- STEP 15: Legend -->
+      <g id="legend" opacity="0">
+        <rect x="330" y="320" width="12" height="12" rx="2" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1"/>
+        <text x="350" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Control Plane</text>
+        <rect x="450" y="320" width="12" height="12" rx="2" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1"/>
+        <text x="470" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Worker Node</text>
+        <rect x="570" y="320" width="12" height="12" rx="2" fill="rgba(108,52,131,0.08)" stroke="rgba(108,52,131,0.3)" stroke-width="1"/>
+        <text x="590" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Fallback Node</text>
+        <rect x="690" y="320" width="12" height="12" rx="2" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
+        <text x="710" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">HPA / Policies</text>
+      </g>
     </svg>
   </div>
+
+  <style>
+  .arch-step { transition: opacity .5s ease, transform .5s ease; }
+  </style>
+
+  <script>
+  function animEl(id, delay, fromX, fromY) {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (!el) { resolve(); return; }
+        el.style.transition = 'opacity .5s ease, transform .5s ease';
+        el.style.opacity = '1';
+        el.style.transform = 'translate(0,0)';
+        setTimeout(resolve, 520);
+      }, delay);
+    });
+  }
+
+  async function runArchAnimation() {
+    // Reset all
+    const ids = ['az-cp','az-worker','cp1','cp2','cp3','cp-infra','cp-arrow','w1','w2','w3','w4','w5','hpa','nodeselector','pvc','legend'];
+    const transforms = {
+      'cp1':'translate(0,8)', 'cp2':'translate(0,8)', 'cp3':'translate(0,8)',
+      'cp-infra':'translate(0,6)',
+      'w1':'translate(-10,0)','w2':'translate(-10,0)','w3':'translate(-10,0)',
+      'w4':'translate(-10,0)','w5':'translate(-10,0)',
+    };
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.transition = 'none';
+        el.style.opacity = '0';
+        el.style.transform = transforms[id] || '';
+      }
+    });
+
+    await new Promise(r => setTimeout(r, 100));
+
+    // Animate sequence
+    await animEl('az-cp', 0);
+    await animEl('cp1', 0);
+    await animEl('cp2', 0);
+    await animEl('cp3', 0);
+    await animEl('cp-infra', 0);
+    await animEl('az-worker', 0);
+    await animEl('cp-arrow', 0);
+    await animEl('w1', 0);
+    await animEl('w2', 0);
+    await animEl('w3', 0);
+    await animEl('w4', 0);
+    await animEl('w5', 100);
+    await animEl('hpa', 0);
+    await animEl('nodeselector', 100);
+    await animEl('pvc', 100);
+    await animEl('legend', 100);
+  }
+
+  // Auto-trigger when section enters viewport
+  const archObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        setTimeout(() => runArchAnimation(), 300);
+        archObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const archContainer = document.getElementById('archContainer');
+  if (archContainer) archObserver.observe(archContainer);
+  </script>
 
   <div style="margin-top:32px;display:grid;grid-template-columns:1fr 1fr;gap:0;border:var(--line)" class="fade-in fade-in-d1">
     <div style="padding:28px 28px;border-right:var(--line)">
