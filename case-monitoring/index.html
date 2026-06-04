@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automated Monitoring Stack — Noval Ramdani</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#0d0d0d;--white:#fafaf8;
+  --gray-100:#f4f4f2;--gray-200:#e8e8e4;
+  --gray-400:#9a9a94;--gray-600:#5a5a54;
+  --accent:#b7410e;
+  --accent-light:rgba(183,65,14,.07);
+  --line:1px solid #e0e0da;
+  --line-accent:1px solid rgba(183,65,14,.2);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--black);font-size:15px;line-height:1.6;overflow-x:hidden;cursor:none}
+.cursor{position:fixed;width:10px;height:10px;border-radius:50%;background:var(--black);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s,background .2s}
+.cursor-ring{position:fixed;width:36px;height:36px;border-radius:50%;border:1px solid var(--black);pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s,border-color .3s;opacity:.4}
+.cursor.hovered{width:6px;height:6px;background:var(--accent)}
+.cursor-ring.hovered{width:50px;height:50px;border-color:var(--accent);opacity:.25}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 56px;height:58px;display:flex;align-items:center;justify-content:space-between;background:rgba(250,250,248,.92);backdrop-filter:blur(16px);border-bottom:var(--line);transform:translateY(-100%);animation:navSlide .5s .1s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes navSlide{to{transform:translateY(0)}}
+.nav-left{display:flex;align-items:center;gap:20px}
+.nav-back{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-600);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .2s}
+.nav-back:hover{color:var(--black)}
+.nav-back i{font-size:13px}
+.nav-divider{width:1px;height:16px;background:var(--gray-200)}
+.nav-title{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-400);letter-spacing:.06em}
+.nav-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);padding:3px 10px;border:var(--line-accent);background:var(--accent-light);letter-spacing:.06em}
+
+.hero{min-height:100vh;padding:130px 56px 80px;border-bottom:var(--line);position:relative;overflow:hidden;display:flex;align-items:flex-end}
+.hero-bg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 50% at 85% 15%,rgba(183,65,14,.05) 0%,transparent 60%),radial-gradient(ellipse 40% 40% at 8% 85%,rgba(183,65,14,.03) 0%,transparent 55%);animation:bgDrift 10s ease-in-out infinite alternate}
+@keyframes bgDrift{from{transform:scale(1) translate(0,0)}to{transform:scale(1.03) translate(8px,-5px)}}
+.hero-dots{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,#d4d4ce 1px,transparent 1px);background-size:32px 32px;opacity:.35;mask-image:radial-gradient(ellipse 90% 90% at 50% 50%,black 30%,transparent 100%)}
+.hero-accent-line{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);opacity:.6}
+.hero-num{font-family:'DM Serif Display',serif;font-size:120px;line-height:1;letter-spacing:-.04em;color:var(--gray-200);position:absolute;top:80px;right:56px;pointer-events:none;opacity:0;animation:fadeUp .7s .2s ease forwards;user-select:none}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;width:100%;max-width:1200px;position:relative}
+.hero-eyebrow{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-400);letter-spacing:.14em;text-transform:uppercase;margin-bottom:24px;display:flex;align-items:center;gap:14px;opacity:0;animation:fadeUp .7s .3s ease forwards}
+.hero-eyebrow::before{content:'';display:block;width:28px;height:1px;background:var(--accent)}
+.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(40px,5vw,68px);line-height:1.0;letter-spacing:-.025em;color:var(--black);margin-bottom:8px;overflow:hidden}
+.hero-title-line{display:block;opacity:0;transform:translateY(100%);animation:lineReveal .8s cubic-bezier(.22,1,.36,1) forwards}
+.hero-title-line:nth-child(1){animation-delay:.45s}
+.hero-title-line:nth-child(2){animation-delay:.6s}
+.hero-title-line:nth-child(3){animation-delay:.72s;color:var(--accent);font-style:italic}
+@keyframes lineReveal{to{opacity:1;transform:translateY(0)}}
+.hero-sub{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:.06em;margin-bottom:28px;opacity:0;animation:fadeUp .6s .85s ease forwards;display:flex;align-items:center;gap:8px}
+.hero-sub i{font-size:14px}
+.hero-desc{font-size:15px;color:var(--gray-600);font-weight:300;line-height:1.8;max-width:460px;opacity:0;animation:fadeUp .6s .95s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.hero-right{display:flex;flex-direction:column;justify-content:flex-end;opacity:0;animation:fadeUp .7s .8s ease forwards}
+.hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--gray-200);border:var(--line)}
+.stat-box{background:var(--white);padding:28px 24px;position:relative;overflow:hidden;transition:background .2s}
+.stat-box::before{content:'';position:absolute;left:0;top:0;bottom:0;width:0;background:var(--accent);transition:width .25s ease}
+.stat-box:hover::before{width:3px}
+.stat-box:hover{background:var(--gray-100)}
+.stat-icon{font-size:16px;color:var(--gray-300);margin-bottom:10px;display:block}
+.stat-num{font-family:'DM Serif Display',serif;font-size:30px;line-height:1;color:var(--black);margin-bottom:5px}
+.stat-label{font-size:11px;color:var(--gray-400);letter-spacing:.04em}
+
+section{padding:88px 56px;border-bottom:var(--line)}
+.section-header{display:flex;align-items:baseline;gap:16px;margin-bottom:52px}
+.section-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);padding:3px 10px;border:var(--line-accent);background:var(--accent-light);letter-spacing:.08em;text-transform:uppercase;align-self:center}
+.section-title{font-family:'DM Serif Display',serif;font-size:clamp(26px,2.8vw,38px);letter-spacing:-.015em}
+.fade-in{opacity:0;transform:translateY(24px);transition:opacity .65s ease,transform .65s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+.fade-in-d1{transition-delay:.1s}
+.fade-in-d2{transition-delay:.2s}
+
+/* Architecture diagram */
+.arch-wrap{background:#120a06;border:var(--line);padding:40px 32px 32px;position:relative;overflow:hidden;border-radius:2px}
+.arch-wrap-label{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:28px}
+.replay-btn{position:absolute;top:14px;right:16px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;color:#ffab91;background:rgba(255,171,145,.08);border:1px solid rgba(255,171,145,.2);padding:5px 12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
+.replay-btn:hover{background:rgba(255,171,145,.15)}
+.replay-btn i{font-size:12px}
+
+/* Coverage grid */
+.coverage-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:var(--line)}
+.coverage-card{padding:28px 24px;border-right:var(--line);border-bottom:var(--line);transition:background .2s;position:relative;overflow:hidden}
+.coverage-card:nth-child(3n){border-right:none}
+.coverage-card:nth-last-child(-n+3){border-bottom:none}
+.coverage-card:hover{background:var(--gray-100)}
+.coverage-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);opacity:0;transition:opacity .25s}
+.coverage-card:hover::before{opacity:1}
+.coverage-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.coverage-icon{font-size:22px;color:var(--accent)}
+.coverage-title{font-family:'DM Serif Display',serif;font-size:17px}
+.coverage-desc{font-size:13px;color:var(--gray-600);line-height:1.75;font-weight:300}
+.coverage-metrics{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
+.coverage-metric{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;background:var(--accent-light);color:var(--accent);border:var(--line-accent)}
+
+/* Alert pipeline flow */
+.pipeline-flow{display:flex;align-items:stretch;gap:0;border:var(--line)}
+.pipeline-step{flex:1;padding:28px 20px;border-right:var(--line);position:relative;transition:background .2s}
+.pipeline-step:last-child{border-right:none}
+.pipeline-step:hover{background:var(--gray-100)}
+.pipeline-step-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--gray-400);margin-bottom:10px;letter-spacing:.08em}
+.pipeline-step-icon{font-size:22px;color:var(--accent);margin-bottom:12px;display:block}
+.pipeline-step-title{font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:8px;line-height:1.2}
+.pipeline-step-desc{font-size:12px;color:var(--gray-600);line-height:1.65;font-weight:300}
+.pipeline-arrow{position:absolute;right:-10px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:var(--white);border:var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--accent);z-index:2}
+.pipeline-step:last-child .pipeline-arrow{display:none}
+
+/* Routing logic */
+.routing-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:var(--line)}
+.routing-item{padding:32px 28px;border-right:var(--line);transition:background .2s}
+.routing-item:last-child{border-right:none}
+.routing-item:hover{background:var(--gray-100)}
+.routing-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.routing-icon{font-size:22px;color:var(--accent)}
+.routing-name{font-family:'DM Serif Display',serif;font-size:18px}
+.routing-desc{font-size:13px;color:var(--gray-600);line-height:1.75;font-weight:300}
+.routing-examples{margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.routing-example{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-600);padding:6px 10px;background:var(--gray-100);border-left:2px solid var(--accent)}
+.routing-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);margin-top:10px;display:block;letter-spacing:.06em}
+
+/* Slash command */
+.slash-box{border:var(--line);padding:32px;background:var(--gray-100)}
+.slash-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--gray-400);letter-spacing:.1em;text-transform:uppercase;margin-bottom:20px}
+.slash-items{display:flex;flex-direction:column;gap:8px}
+.slash-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--white);border:var(--line)}
+.slash-cmd{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);font-weight:500}
+.slash-desc{font-size:13px;color:var(--gray-600);font-weight:300}
+
+/* Results */
+.results-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:var(--line)}
+.result-box{padding:36px 28px;border-right:var(--line);transition:background .2s;position:relative;overflow:hidden}
+.result-box:last-child{border-right:none}
+.result-box::before{content:'';position:absolute;left:0;top:0;bottom:0;width:0;background:var(--accent);transition:width .25s}
+.result-box:hover::before{width:3px}
+.result-box:hover{background:var(--gray-100)}
+.result-icon{font-size:22px;color:var(--accent);margin-bottom:14px;display:block}
+.result-num{font-family:'DM Serif Display',serif;font-size:36px;line-height:1;color:var(--black);margin-bottom:6px}
+.result-label{font-size:12px;color:var(--gray-400);letter-spacing:.04em}
+.result-sub{font-size:12px;color:var(--gray-600);margin-top:6px;font-weight:300;line-height:1.5}
+
+/* Tech stack */
+.stack-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:var(--line)}
+.stack-item{padding:28px 24px;border-right:var(--line);border-bottom:var(--line);transition:background .2s}
+.stack-item:nth-child(3n){border-right:none}
+.stack-item:nth-last-child(-n+3){border-bottom:none}
+.stack-item:hover{background:var(--gray-100)}
+.stack-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.stack-icon{font-size:20px;color:var(--accent)}
+.stack-name{font-family:'DM Serif Display',serif;font-size:17px}
+.stack-why{font-size:13px;color:var(--gray-600);line-height:1.7;font-weight:300}
+.stack-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);margin-top:10px;display:block;letter-spacing:.06em}
+
+/* Lessons */
+.lessons-list{display:flex;flex-direction:column;gap:0}
+.lesson-item{display:grid;grid-template-columns:48px 1fr;gap:24px;padding:28px 0;border-bottom:var(--line);align-items:start}
+.lesson-item:first-child{border-top:var(--line)}
+.lesson-num{font-family:'DM Serif Display',serif;font-size:32px;color:var(--gray-200);line-height:1}
+.lesson-title{font-size:15px;font-weight:500;margin-bottom:6px}
+.lesson-body{font-size:14px;color:var(--gray-600);line-height:1.75;font-weight:300}
+
+.bottom-nav{padding:56px 56px;display:flex;justify-content:space-between;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;font-size:13px;font-weight:400;text-decoration:none;letter-spacing:.02em;transition:all .2s;cursor:none;border:none;font-family:'DM Sans',sans-serif}
+.btn i{font-size:15px}
+.btn-outline{background:transparent;color:var(--black);border:var(--line)}
+.btn-outline:hover{background:var(--gray-100)}
+
+footer{padding:28px 56px;border-top:var(--line);display:flex;justify-content:space-between;align-items:center}
+.footer-copy{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-400)}
+.footer-links{display:flex;gap:24px}
+.footer-link{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-400);text-decoration:none;transition:color .2s;display:flex;align-items:center;gap:5px}
+.footer-link:hover{color:var(--black)}
+
+@media(max-width:960px){
+  nav,.bottom-nav,footer{padding-left:28px;padding-right:28px}
+  .hero{padding:110px 28px 60px}
+  .hero-num{display:none}
+  section{padding:64px 28px}
+  .hero-grid,.routing-grid{grid-template-columns:1fr;gap:40px}
+  .coverage-grid,.stack-grid{grid-template-columns:1fr 1fr}
+  .pipeline-flow{flex-direction:column}
+  .pipeline-step{border-right:none;border-bottom:var(--line)}
+  .pipeline-step:last-child{border-bottom:none}
+  .pipeline-arrow{display:none!important}
+  .results-grid{grid-template-columns:1fr 1fr}
+  .result-box:nth-child(2){border-right:none}
+  .result-box:nth-child(3){border-top:var(--line)}
+  .routing-item{border-right:none;border-bottom:var(--line)}
+  .bottom-nav{flex-direction:column;gap:32px;align-items:flex-start}
+}
+@media(max-width:600px){
+  .coverage-grid,.stack-grid,.results-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<nav>
+  <div class="nav-left">
+    <a href="/" class="nav-back"><i class="ti ti-arrow-left"></i>Portfolio</a>
+    <div class="nav-divider"></div>
+    <span class="nav-title">Case Study</span>
+  </div>
+  <div class="nav-tag">005 · Monitoring & Alerting</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-dots"></div>
+  <div class="hero-accent-line"></div>
+  <div class="hero-num">005</div>
+  <div class="hero-grid">
+    <div>
+      <p class="hero-eyebrow">Monitoring · Automation · Alerting · Sentral Link</p>
+      <h1 class="hero-title">
+        <span class="hero-title-line">Automated</span>
+        <span class="hero-title-line">Monitoring</span>
+        <span class="hero-title-line">Stack</span>
+      </h1>
+      <p class="hero-sub"><i class="ti ti-bell"></i>Prometheus · n8n · Alertmanager · Telegram · Custom rules</p>
+      <p class="hero-desc">
+        Built a full-coverage monitoring and alerting pipeline from scratch. 
+        Custom threshold-based rules across servers, containers, Kubernetes clusters, 
+        and all database services — routed intelligently to Telegram channels 
+        based on severity. Plus on-demand health checks via slash commands.
+      </p>
+    </div>
+    <div class="hero-right">
+      <div class="hero-stats">
+        <div class="stat-box">
+          <i class="ti ti-layers-intersect stat-icon"></i>
+          <div class="stat-num">6+</div>
+          <div class="stat-label">Service Types Monitored</div>
+        </div>
+        <div class="stat-box">
+          <i class="ti ti-adjustments stat-icon"></i>
+          <div class="stat-num">Custom</div>
+          <div class="stat-label">Threshold-Based Rules</div>
+        </div>
+        <div class="stat-box">
+          <i class="ti ti-brand-telegram stat-icon"></i>
+          <div class="stat-num">2</div>
+          <div class="stat-label">Alert Channels</div>
+        </div>
+        <div class="stat-box">
+          <i class="ti ti-terminal stat-icon"></i>
+          <div class="stat-num">/cmd</div>
+          <div class="stat-label">Slash Command Health Checks</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE DIAGRAM -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">01</div>
+    <h2 class="section-title">Alert Pipeline Architecture</h2>
+  </div>
+  <p class="fade-in" style="font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8;max-width:700px;margin-bottom:36px">
+    Metrics flow from exporters into Prometheus. Alertmanager evaluates rules and fires 
+    alerts to n8n via webhook. n8n applies routing logic — critical alerts go to a 
+    dedicated high-priority Telegram channel, everything else routes to a common channel. 
+    The Telegram bot also accepts slash commands for on-demand health checks.
+  </p>
+
+  <div class="arch-wrap fade-in fade-in-d1" id="archContainer">
+    <div class="arch-wrap-label">Alert Pipeline · Prometheus → Alertmanager → n8n → Telegram</div>
+    <button class="replay-btn" onclick="runArchAnim()"><i class="ti ti-refresh"></i>Replay</button>
+
+    <svg id="archSvg" viewBox="0 0 900 500" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%">
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(255,171,145,0.7)"/>
+        </marker>
+        <marker id="arr-crit" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(244,67,54,0.7)"/>
+        </marker>
+        <marker id="arr-gen" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(129,199,132,0.7)"/>
+        </marker>
+      </defs>
+
+      <!-- STEP 1: Sources layer -->
+      <g id="s1" opacity="0" transform="translate(0,-8)">
+        <rect x="20" y="20" width="860" height="72" rx="4" fill="rgba(183,65,14,0.06)" stroke="rgba(255,171,145,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="40" y="36" font-family="'DM Mono',monospace" font-size="9" fill="rgba(255,171,145,0.4)" letter-spacing="2">METRICS SOURCES · Exporters</text>
+        <rect x="36" y="44" width="88" height="36" rx="3" fill="rgba(183,65,14,0.12)" stroke="rgba(255,171,145,0.25)" stroke-width="1"/>
+        <text x="80" y="60" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ffab91">node-exporter</text>
+        <text x="80" y="73" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.5)">servers</text>
+
+        <rect x="132" y="44" width="88" height="36" rx="3" fill="rgba(183,65,14,0.12)" stroke="rgba(255,171,145,0.25)" stroke-width="1"/>
+        <text x="176" y="60" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ffab91">cAdvisor</text>
+        <text x="176" y="73" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.5)">containers</text>
+
+        <rect x="228" y="44" width="88" height="36" rx="3" fill="rgba(183,65,14,0.12)" stroke="rgba(255,171,145,0.25)" stroke-width="1"/>
+        <text x="272" y="60" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ffab91">kube-state</text>
+        <text x="272" y="73" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.5)">kubernetes</text>
+
+        <rect x="324" y="44" width="88" height="36" rx="3" fill="rgba(183,65,14,0.12)" stroke="rgba(255,171,145,0.25)" stroke-width="1"/>
+        <text x="368" y="60" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ffab91">mysqld-exp</text>
+        <text x="368" y="73" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.5)">mariadb</text>
+
+        <rect x="420" y="44" width="88" height="36" rx="3" fill="rgba(183,65,14,0.12)" stroke="rgba(255,171,145,0.25)" stroke-width="1"/>
+        <text x="464" y="60" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ffab91">mongodb-exp</text>
+        <text x="464" y="73" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.5)">mongodb</text>
+
+        <rect x="516" y="44" width="88" height="36" rx="3" fill="rgba(183,65,14,0.12)" stroke="rgba(255,171,145,0.25)" stroke-width="1"/>
+        <text x="560" y="60" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ffab91">rabbitmq-exp</text>
+        <text x="560" y="73" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.5)">rabbitmq</text>
+
+        <rect x="612" y="44" width="88" height="36" rx="3" fill="rgba(183,65,14,0.12)" stroke="rgba(255,171,145,0.25)" stroke-width="1"/>
+        <text x="656" y="60" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ffab91">custom script</text>
+        <text x="656" y="73" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.5)">replication</text>
+
+        <rect x="708" y="44" width="88" height="36" rx="3" fill="rgba(183,65,14,0.12)" stroke="rgba(255,171,145,0.25)" stroke-width="1"/>
+        <text x="752" y="60" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ffab91">blackbox-exp</text>
+        <text x="752" y="73" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.5)">uptime</text>
+      </g>
+
+      <!-- STEP 2: Prometheus -->
+      <g id="s2" opacity="0" transform="translate(0,-6)">
+        <line x1="450" y1="92" x2="450" y2="116" stroke="rgba(255,171,145,0.5)" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="310" y="116" width="280" height="44" rx="5" fill="rgba(183,65,14,0.15)" stroke="rgba(255,171,145,0.45)" stroke-width="1.5"/>
+        <text x="450" y="135" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ffab91" font-weight="500">Prometheus</text>
+        <text x="450" y="150" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(255,171,145,0.6)">Scrape · Store · Evaluate Rules</text>
+      </g>
+
+      <!-- STEP 3: Alertmanager + Grafana -->
+      <g id="s3" opacity="0" transform="translate(0,-4)">
+        <line x1="390" y1="160" x2="300" y2="196" stroke="rgba(255,171,145,0.4)" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="510" y1="160" x2="600" y2="196" stroke="rgba(255,171,145,0.3)" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect x="180" y="196" width="240" height="40" rx="4" fill="rgba(183,65,14,0.15)" stroke="rgba(255,171,145,0.4)" stroke-width="1.5"/>
+        <text x="300" y="213" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#ffab91" font-weight="500">Alertmanager</text>
+        <text x="300" y="227" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.5)">rule evaluation · dedup · grouping</text>
+        <rect x="540" y="196" width="160" height="40" rx="4" fill="rgba(183,65,14,0.08)" stroke="rgba(255,171,145,0.2)" stroke-width="1"/>
+        <text x="620" y="213" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#ffab91">Grafana</text>
+        <text x="620" y="227" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.4)">dashboards · visualization</text>
+      </g>
+
+      <!-- STEP 4: n8n webhook -->
+      <g id="s4" opacity="0" transform="translate(0,-4)">
+        <line x1="300" y1="236" x2="300" y2="272" stroke="rgba(255,171,145,0.5)" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="180" y="272" width="240" height="40" rx="4" fill="rgba(183,65,14,0.15)" stroke="rgba(255,171,145,0.45)" stroke-width="1.5"/>
+        <text x="300" y="289" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#ffab91" font-weight="500">n8n Workflow</text>
+        <text x="300" y="304" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.5)">webhook receiver · routing logic · message format</text>
+      </g>
+
+      <!-- STEP 5: Routing split -->
+      <g id="s5" opacity="0">
+        <line x1="240" y1="312" x2="160" y2="356" stroke="rgba(244,67,54,0.5)" stroke-width="1.5" marker-end="url(#arr-crit)"/>
+        <line x1="360" y1="312" x2="440" y2="356" stroke="rgba(129,199,132,0.5)" stroke-width="1.5" marker-end="url(#arr-gen)"/>
+
+        <rect x="60" y="356" width="200" height="56" rx="4" fill="rgba(244,67,54,0.1)" stroke="rgba(244,67,54,0.35)" stroke-width="1.5"/>
+        <text x="160" y="378" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#ef9a9a" font-weight="500">🔴 Critical Channel</text>
+        <text x="160" y="392" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(239,154,154,0.6)">Dedicated · Immediate</text>
+        <text x="160" y="404" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(239,154,154,0.5)">down · data loss · high CPU/mem</text>
+
+        <rect x="340" y="356" width="200" height="56" rx="4" fill="rgba(129,199,132,0.08)" stroke="rgba(129,199,132,0.3)" stroke-width="1.5"/>
+        <text x="440" y="378" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#81c784" font-weight="500">🟡 General Channel</text>
+        <text x="440" y="392" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(129,199,132,0.6)">Common · Non-urgent</text>
+        <text x="440" y="404" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(129,199,132,0.5)">warnings · replication lag · disk</text>
+      </g>
+
+      <!-- STEP 6: Slash command path -->
+      <g id="s6" opacity="0">
+        <rect x="620" y="340" width="220" height="72" rx="4" fill="rgba(183,65,14,0.06)" stroke="rgba(255,171,145,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="730" y="358" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(255,171,145,0.4)" letter-spacing="1">ON-DEMAND</text>
+        <rect x="632" y="364" width="196" height="36" rx="3" fill="rgba(183,65,14,0.1)" stroke="rgba(255,171,145,0.2)" stroke-width="1"/>
+        <text x="730" y="379" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ffab91">/check_server</text>
+        <text x="730" y="393" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,171,145,0.5)">→ Telegram Bot → n8n → Prometheus</text>
+        <!-- connecting line from General channel -->
+        <line x1="540" y1="384" x2="620" y2="384" stroke="rgba(255,171,145,0.2)" stroke-width="1" stroke-dasharray="4 3"/>
+      </g>
+
+      <!-- STEP 7: Telegram bot icon -->
+      <g id="s7" opacity="0">
+        <rect x="60" y="432" width="480" height="24" rx="3" fill="rgba(183,65,14,0.04)" stroke="rgba(255,171,145,0.1)" stroke-width="1"/>
+        <text x="300" y="448" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(255,171,145,0.3)" letter-spacing="1">Telegram Bot API · Real-time push notifications · No polling</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- WHAT'S MONITORED -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">02</div>
+    <h2 class="section-title">What's Monitored</h2>
+  </div>
+  <div class="coverage-grid fade-in">
+    <div class="coverage-card">
+      <div class="coverage-header">
+        <i class="ti ti-server coverage-icon"></i>
+        <div class="coverage-title">Servers</div>
+      </div>
+      <div class="coverage-desc">All physical and virtual servers covered via node-exporter. CPU, memory, disk I/O, network throughput, and system load. Thresholds tuned per server based on normal operating baseline.</div>
+      <div class="coverage-metrics">
+        <span class="coverage-metric">CPU %</span>
+        <span class="coverage-metric">RAM %</span>
+        <span class="coverage-metric">Disk I/O</span>
+        <span class="coverage-metric">Load avg</span>
+      </div>
+    </div>
+    <div class="coverage-card">
+      <div class="coverage-header">
+        <i class="ti ti-brand-docker coverage-icon"></i>
+        <div class="coverage-title">Docker Containers</div>
+      </div>
+      <div class="coverage-desc">Container-level metrics via cAdvisor. Monitors per-container CPU throttling, memory limits, and restart counts. Alerts fire if a container exits unexpectedly or exceeds resource limits.</div>
+      <div class="coverage-metrics">
+        <span class="coverage-metric">CPU throttle</span>
+        <span class="coverage-metric">Mem limit</span>
+        <span class="coverage-metric">Restarts</span>
+        <span class="coverage-metric">Exit status</span>
+      </div>
+    </div>
+    <div class="coverage-card">
+      <div class="coverage-header">
+        <i class="ti ti-hexagons coverage-icon"></i>
+        <div class="coverage-title">Kubernetes</div>
+      </div>
+      <div class="coverage-desc">Cluster-level monitoring via kube-state-metrics and Prometheus. Tracks pod crash loops, pending pods, node pressure, and deployment rollout failures across all three clusters (dev/staging/prod).</div>
+      <div class="coverage-metrics">
+        <span class="coverage-metric">CrashLoopBackOff</span>
+        <span class="coverage-metric">Pending pods</span>
+        <span class="coverage-metric">Node pressure</span>
+      </div>
+    </div>
+    <div class="coverage-card">
+      <div class="coverage-header">
+        <i class="ti ti-database coverage-icon"></i>
+        <div class="coverage-title">MariaDB Replication</div>
+      </div>
+      <div class="coverage-desc">Replication health tracked via mysqld-exporter and custom scripts. Monitors Seconds_Behind_Master, Slave_IO_Running, and Slave_SQL_Running. Alert fires immediately if replication stops or lag exceeds threshold.</div>
+      <div class="coverage-metrics">
+        <span class="coverage-metric">Repl lag</span>
+        <span class="coverage-metric">IO thread</span>
+        <span class="coverage-metric">SQL thread</span>
+        <span class="coverage-metric">Queries/s</span>
+      </div>
+    </div>
+    <div class="coverage-card">
+      <div class="coverage-header">
+        <i class="ti ti-leaf coverage-icon"></i>
+        <div class="coverage-title">MongoDB</div>
+      </div>
+      <div class="coverage-desc">MongoDB availability and performance via mongodb-exporter. Monitors connection pool utilization, operation latency, and whether the instance is actively accepting connections — critical for services that depend on document storage.</div>
+      <div class="coverage-metrics">
+        <span class="coverage-metric">Connections</span>
+        <span class="coverage-metric">Op latency</span>
+        <span class="coverage-metric">Up/down</span>
+      </div>
+    </div>
+    <div class="coverage-card">
+      <div class="coverage-header">
+        <i class="ti ti-message-circle coverage-icon"></i>
+        <div class="coverage-title">RabbitMQ</div>
+      </div>
+      <div class="coverage-desc">RabbitMQ health and queue metrics via the built-in management exporter. Tracks queue depth, consumer count, and message rates. Alerts if queue depth spikes — indicating consumers are down or overwhelmed.</div>
+      <div class="coverage-metrics">
+        <span class="coverage-metric">Queue depth</span>
+        <span class="coverage-metric">Consumers</span>
+        <span class="coverage-metric">Msg rate</span>
+        <span class="coverage-metric">Up/down</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ALERT PIPELINE -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">03</div>
+    <h2 class="section-title">Alert Pipeline</h2>
+  </div>
+  <div class="pipeline-flow fade-in">
+    <div class="pipeline-step">
+      <div class="pipeline-step-num">01</div>
+      <i class="ti ti-chart-line pipeline-step-icon"></i>
+      <div class="pipeline-step-title">Threshold Hit</div>
+      <div class="pipeline-step-desc">Prometheus evaluates custom alert rules on every scrape cycle. When a metric crosses its threshold — e.g. CPU > 85% for 5 minutes — the alert transitions from inactive to firing.</div>
+      <div class="pipeline-arrow">→</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-step-num">02</div>
+      <i class="ti ti-filter pipeline-step-icon"></i>
+      <div class="pipeline-step-title">Alertmanager</div>
+      <div class="pipeline-step-desc">Alertmanager receives the firing alert, deduplicates repeated firings, and groups related alerts. Applies inhibition rules — suppressing lower-severity alerts when a higher-severity one is already active.</div>
+      <div class="pipeline-arrow">→</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-step-num">03</div>
+      <i class="ti ti-webhook pipeline-step-icon"></i>
+      <div class="pipeline-step-title">n8n Webhook</div>
+      <div class="pipeline-step-desc">Alertmanager sends the alert payload to an n8n webhook. n8n parses the severity label, formats the message, and applies routing logic to decide which Telegram channel receives it.</div>
+      <div class="pipeline-arrow">→</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-step-num">04</div>
+      <i class="ti ti-git-branch pipeline-step-icon"></i>
+      <div class="pipeline-step-title">Route by Severity</div>
+      <div class="pipeline-step-desc">n8n checks the severity label: critical alerts route to the dedicated critical channel. Warning and info alerts route to the general channel. Different notification formats per severity level.</div>
+      <div class="pipeline-arrow">→</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-step-num">05</div>
+      <i class="ti ti-brand-telegram pipeline-step-icon"></i>
+      <div class="pipeline-step-title">Telegram Push</div>
+      <div class="pipeline-step-desc">n8n sends the formatted alert to the appropriate Telegram channel via Bot API. Message includes service name, affected host, current value, threshold, and timestamp. No polling — real-time push.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ROUTING LOGIC -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">04</div>
+    <h2 class="section-title">Alert Routing</h2>
+  </div>
+  <div class="routing-grid fade-in">
+    <div class="routing-item">
+      <div class="routing-header">
+        <i class="ti ti-alert-octagon routing-icon" style="color:#ef5350"></i>
+        <div class="routing-name">Critical Channel</div>
+      </div>
+      <div class="routing-desc">Dedicated channel for high-priority alerts that require immediate action. Separate from general alerts to ensure critical issues are never buried under routine notifications. The goal is zero noise in this channel — only things that need immediate attention.</div>
+      <div class="routing-examples">
+        <div class="routing-example">Service down / unreachable</div>
+        <div class="routing-example">MariaDB replication stopped</div>
+        <div class="routing-example">Pod CrashLoopBackOff</div>
+        <div class="routing-example">Disk usage > 90%</div>
+        <div class="routing-example">Node memory critical</div>
+      </div>
+      <span class="routing-tag" style="color:#ef5350">// severity: critical · immediate action required</span>
+    </div>
+    <div class="routing-item">
+      <div class="routing-header">
+        <i class="ti ti-alert-triangle routing-icon" style="color:#ffa726"></i>
+        <div class="routing-name">General Channel</div>
+      </div>
+      <div class="routing-desc">Common channel for warnings and informational alerts. These indicate something worth investigating but not urgent enough to page immediately. Reviewed during working hours as part of daily operations.</div>
+      <div class="routing-examples">
+        <div class="routing-example">CPU usage > 75% (sustained)</div>
+        <div class="routing-example">Replication lag warning</div>
+        <div class="routing-example">Queue depth elevated</div>
+        <div class="routing-example">Container restart (non-loop)</div>
+        <div class="routing-example">Disk usage > 75%</div>
+      </div>
+      <span class="routing-tag" style="color:#ffa726">// severity: warning · investigate when available</span>
+    </div>
+  </div>
+</section>
+
+<!-- SLASH COMMANDS -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">05</div>
+    <h2 class="section-title">On-Demand Health Checks</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px" class="fade-in">
+    <div>
+      <p style="font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8;margin-bottom:24px">
+        Passive alerting catches issues automatically, but sometimes you want to check 
+        a specific service status on demand — without opening Grafana. Telegram slash 
+        commands let me (or anyone with access) query live infrastructure status 
+        directly from the Telegram chat.
+      </p>
+      <p style="font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8">
+        Each command triggers an n8n workflow that queries Prometheus for current metrics 
+        and returns a formatted status summary. The response arrives in seconds — 
+        useful during incidents when you need quick situational awareness.
+      </p>
+    </div>
+    <div class="slash-box">
+      <div class="slash-title">Available Commands</div>
+      <div class="slash-items">
+        <div class="slash-item">
+          <div class="slash-cmd">/check_server</div>
+          <div class="slash-desc">CPU, RAM, disk for all servers</div>
+        </div>
+        <div class="slash-item">
+          <div class="slash-cmd">/check_db</div>
+          <div class="slash-desc">MariaDB replication status + connections</div>
+        </div>
+        <div class="slash-item">
+          <div class="slash-cmd">/check_k8s</div>
+          <div class="slash-desc">Pod status across all clusters</div>
+        </div>
+        <div class="slash-item">
+          <div class="slash-cmd">/check_queue</div>
+          <div class="slash-desc">RabbitMQ queue depths + consumer count</div>
+        </div>
+        <div class="slash-item">
+          <div class="slash-cmd">/status</div>
+          <div class="slash-desc">Full infrastructure health summary</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">06</div>
+    <h2 class="section-title">Results & Impact</h2>
+  </div>
+  <div class="results-grid fade-in">
+    <div class="result-box">
+      <i class="ti ti-layers-intersect result-icon"></i>
+      <div class="result-num">6+</div>
+      <div class="result-label">Service Types</div>
+      <div class="result-sub">Full coverage across servers, Docker, Kubernetes, MariaDB, MongoDB, and RabbitMQ — all in one pipeline.</div>
+    </div>
+    <div class="result-box">
+      <i class="ti ti-git-branch result-icon"></i>
+      <div class="result-num">2</div>
+      <div class="result-label">Alert Channels</div>
+      <div class="result-sub">Clean separation between critical and general alerts. Zero noise in the critical channel means every message there demands attention.</div>
+    </div>
+    <div class="result-box">
+      <i class="ti ti-terminal result-icon"></i>
+      <div class="result-num">5</div>
+      <div class="result-label">Slash Commands</div>
+      <div class="result-sub">On-demand health checks without opening Grafana. Incident response time drops when you can query status from anywhere.</div>
+    </div>
+    <div class="result-box">
+      <i class="ti ti-clock result-icon"></i>
+      <div class="result-num">&lt;1m</div>
+      <div class="result-label">Alert to Notification</div>
+      <div class="result-sub">From threshold breach to Telegram notification in under a minute. Real-time push with no polling delay.</div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">07</div>
+    <h2 class="section-title">Tech Stack & Decisions</h2>
+  </div>
+  <div class="stack-grid fade-in">
+    <div class="stack-item">
+      <div class="stack-header"><i class="ti ti-chart-line stack-icon"></i><div class="stack-name">Prometheus</div></div>
+      <div class="stack-why">Pull-based metrics collection with a powerful query language (PromQL). The de-facto standard for Kubernetes and container monitoring. Pairs natively with the exporter ecosystem — no custom integrations needed for most services.</div>
+      <span class="stack-tag">// Metrics Collection + Storage</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-header"><i class="ti ti-filter stack-icon"></i><div class="stack-name">Alertmanager</div></div>
+      <div class="stack-why">Handles alert deduplication, grouping, and inhibition rules. Prevents alert storms — when a node goes down and 20 services report unhealthy, Alertmanager groups them into one notification instead of 20. Essential for keeping the critical channel clean.</div>
+      <span class="stack-tag">// Alert Dedup + Grouping</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-header"><i class="ti ti-webhook stack-icon"></i><div class="stack-name">n8n</div></div>
+      <div class="stack-why">Chosen over writing custom webhook handlers because n8n provides visual workflow editing, built-in error handling, and easy iteration on routing logic. Adding a new alert type or routing rule takes minutes in the UI rather than code changes and redeployments.</div>
+      <span class="stack-tag">// Routing Logic + Automation</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-header"><i class="ti ti-brand-telegram stack-icon"></i><div class="stack-name">Telegram Bot API</div></div>
+      <div class="stack-why">Telegram was chosen over email or Slack for alert delivery because it's always on mobile, supports bot interactions (slash commands), and push notifications are immediate. As the sole DevOps, on-call awareness via mobile is critical.</div>
+      <span class="stack-tag">// Notification Delivery</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-header"><i class="ti ti-chart-bar stack-icon"></i><div class="stack-name">Grafana</div></div>
+      <div class="stack-why">Grafana provides the visual layer on top of Prometheus for trend analysis and post-incident review. Dashboards per service — servers, Kubernetes, databases — for quick visual health checks during operations. Complementary to alerting, not a replacement.</div>
+      <span class="stack-tag">// Visualization + Dashboards</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-header"><i class="ti ti-adjustments stack-icon"></i><div class="stack-name">Custom Alert Rules</div></div>
+      <div class="stack-why">Default Prometheus alert rules are too generic — they fire too often on normal variance. Every alert rule was written specifically for this infrastructure's baseline. Thresholds were calibrated after observing normal behavior for 1-2 weeks before enabling alerting.</div>
+      <span class="stack-tag">// Custom Thresholds</span>
+    </div>
+  </div>
+</section>
+
+<!-- LESSONS LEARNED -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">08</div>
+    <h2 class="section-title">Lessons Learned</h2>
+  </div>
+  <div class="lessons-list fade-in">
+    <div class="lesson-item">
+      <div class="lesson-num">01</div>
+      <div>
+        <div class="lesson-title">Alert fatigue kills on-call effectiveness</div>
+        <div class="lesson-body">The first version of the alerting pipeline had too many rules firing on normal system variance. Within a week, the critical channel was noisy enough that real alerts were being missed. The fix was to spend time calibrating thresholds based on actual baseline behavior and mercilessly deleting rules that fired too often without action. A quiet critical channel is worth more than comprehensive coverage.</div>
+      </div>
+    </div>
+    <div class="lesson-item">
+      <div class="lesson-num">02</div>
+      <div>
+        <div class="lesson-title">Two channels are better than one, but three is too many</div>
+        <div class="lesson-body">Separating critical from general was the most impactful change to the alerting setup. Adding more channels (per-service, per-environment) was tempting but created confusion about where to look during an incident. Two channels with clear severity semantics is the right balance — you always know which channel to check first.</div>
+      </div>
+    </div>
+    <div class="lesson-item">
+      <div class="lesson-num">03</div>
+      <div>
+        <div class="lesson-title">n8n is excellent for alert routing until it goes down</div>
+        <div class="lesson-body">n8n is a critical piece of the alerting infrastructure — if it's down, alerts don't reach Telegram. I learned to monitor n8n itself (uptime check via blackbox-exporter with a fallback direct Alertmanager email route). The irony of needing to monitor your monitoring tools is real, but ignoring it creates a dangerous blind spot.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav fade-in">
+  <a href="/" class="btn btn-outline"><i class="ti ti-arrow-left"></i>Back to Portfolio</a>
+</div>
+
+<footer>
+  <span class="footer-copy">© 2026 Noval Ramdani</span>
+  <div class="footer-links">
+    <a href="/" class="footer-link"><i class="ti ti-user"></i>Portfolio</a>
+    <a href="https://linkedin.com/in/noval-ramdani" target="_blank" class="footer-link"><i class="ti ti-brand-linkedin"></i>LinkedIn</a>
+    <a href="mailto:novalramdani.work@gmail.com" class="footer-link"><i class="ti ti-mail"></i>Email</a>
+  </div>
+</footer>
+
+<script>
+const cursor=document.getElementById('cursor'),ring=document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+function animateCursor(){
+  cursor.style.left=mx+'px';cursor.style.top=my+'px';
+  rx+=(mx-rx)*.12;ry+=(my-ry)*.12;
+  ring.style.left=rx+'px';ring.style.top=ry+'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+document.querySelectorAll('a,button,.stat-box,.coverage-card,.pipeline-step,.routing-item,.result-box,.stack-item,.lesson-item,.slash-item').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cursor.classList.add('hovered');ring.classList.add('hovered')});
+  el.addEventListener('mouseleave',()=>{cursor.classList.remove('hovered');ring.classList.remove('hovered')});
+});
+
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:.08});
+document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
+
+const steps=['s1','s2','s3','s4','s5','s6','s7'];
+const initT={'s1':'translate(0,-8)','s2':'translate(0,-6)','s3':'translate(0,-4)','s4':'translate(0,-4)'};
+
+function animEl(id){
+  return new Promise(resolve=>{
+    const el=document.getElementById(id);
+    if(!el){resolve();return}
+    el.style.transition='opacity .5s ease, transform .5s ease';
+    el.style.opacity='1';
+    el.style.transform='translate(0,0)';
+    setTimeout(resolve,550);
+  });
+}
+
+async function runArchAnim(){
+  steps.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.style.transition='none';el.style.opacity='0';el.style.transform=initT[id]||''}
+  });
+  await new Promise(r=>setTimeout(r,100));
+  for(const id of steps) await animEl(id);
+}
+
+const archObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){setTimeout(runArchAnim,400);archObs.unobserve(e.target)}
+  });
+},{threshold:0.2});
+const archEl=document.getElementById('archContainer');
+if(archEl)archObs.observe(archEl);
+</script>
+</body>
+</html>
