@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Huawei Cloud Migration — Noval Ramdani</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #0d0d0d;
+  --white: #fafaf8;
+  --gray-100: #f4f4f2;
+  --gray-200: #e8e8e4;
+  --gray-400: #9a9a94;
+  --gray-600: #5a5a54;
+  --accent: #1a4a6b;
+  --accent-light: rgba(26,74,107,.07);
+  --accent-mid: rgba(26,74,107,.2);
+  --line: 1px solid #e0e0da;
+  --line-accent: 1px solid rgba(26,74,107,.2);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--white);
+  color: var(--black);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+.cursor {
+  position: fixed; width: 10px; height: 10px;
+  border-radius: 50%; background: var(--black);
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: width .2s, height .2s, background .2s;
+}
+.cursor-ring {
+  position: fixed; width: 36px; height: 36px;
+  border-radius: 50%; border: 1px solid var(--black);
+  pointer-events: none; z-index: 9998;
+  transform: translate(-50%,-50%);
+  transition: width .3s, height .3s, border-color .3s;
+  opacity: .4;
+}
+.cursor.hovered { width: 6px; height: 6px; background: var(--accent); }
+.cursor-ring.hovered { width: 50px; height: 50px; border-color: var(--accent); opacity: .25; }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 0 56px; height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(250,250,248,.92);
+  backdrop-filter: blur(16px);
+  border-bottom: var(--line);
+  transform: translateY(-100%);
+  animation: navSlide .5s .1s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes navSlide { to { transform: translateY(0); } }
+.nav-left { display: flex; align-items: center; gap: 20px; }
+.nav-back {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--gray-600); text-decoration: none;
+  display: flex; align-items: center; gap: 6px; transition: color .2s;
+}
+.nav-back:hover { color: var(--black); }
+.nav-back i { font-size: 13px; }
+.nav-divider { width: 1px; height: 16px; background: var(--gray-200); }
+.nav-title { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gray-400); letter-spacing: .06em; }
+.nav-tag {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--accent); padding: 3px 10px;
+  border: var(--line-accent); background: var(--accent-light); letter-spacing: .06em;
+}
+
+.hero {
+  min-height: 100vh; padding: 130px 56px 80px;
+  border-bottom: var(--line);
+  position: relative; overflow: hidden;
+  display: flex; align-items: flex-end;
+}
+.hero-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 85% 15%, rgba(26,74,107,.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 8% 85%, rgba(26,74,107,.03) 0%, transparent 55%);
+  animation: bgDrift 10s ease-in-out infinite alternate;
+}
+@keyframes bgDrift { from{transform:scale(1) translate(0,0)} to{transform:scale(1.03) translate(8px,-5px)} }
+.hero-dots {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle, #d4d4ce 1px, transparent 1px);
+  background-size: 32px 32px; opacity: .35;
+  mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 30%, transparent 100%);
+}
+.hero-accent-line { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); opacity: .6; }
+.hero-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 120px; line-height: 1; letter-spacing: -.04em;
+  color: var(--gray-200); position: absolute; top: 80px; right: 56px;
+  pointer-events: none; opacity: 0; animation: fadeUp .7s .2s ease forwards; user-select: none;
+}
+.hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; width: 100%; max-width: 1200px; position: relative; }
+.hero-eyebrow {
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gray-400);
+  letter-spacing: .14em; text-transform: uppercase; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 14px;
+  opacity: 0; animation: fadeUp .7s .3s ease forwards;
+}
+.hero-eyebrow::before { content:''; display:block; width:28px; height:1px; background:var(--accent); }
+.hero-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(40px,5vw,68px); line-height: 1.0; letter-spacing: -.025em;
+  color: var(--black); margin-bottom: 8px; overflow: hidden;
+}
+.hero-title-line {
+  display: block; opacity: 0; transform: translateY(100%);
+  animation: lineReveal .8s cubic-bezier(.22,1,.36,1) forwards;
+}
+.hero-title-line:nth-child(1) { animation-delay: .45s; }
+.hero-title-line:nth-child(2) { animation-delay: .6s; }
+.hero-title-line:nth-child(3) { animation-delay: .72s; color: var(--accent); font-style: italic; }
+@keyframes lineReveal { to { opacity:1; transform:translateY(0); } }
+.hero-sub {
+  font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent);
+  letter-spacing: .06em; margin-bottom: 28px;
+  opacity: 0; animation: fadeUp .6s .85s ease forwards;
+  display: flex; align-items: center; gap: 8px;
+}
+.hero-sub i { font-size: 14px; }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: #b7410e; padding: 4px 12px;
+  border: 1px solid rgba(183,65,14,.25); background: rgba(183,65,14,.06);
+  margin-bottom: 20px; letter-spacing: .08em;
+  opacity: 0; animation: fadeUp .6s .75s ease forwards;
+}
+.status-dot-orange { width: 6px; height: 6px; border-radius: 50%; background: #b7410e; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.hero-desc {
+  font-size: 15px; color: var(--gray-600); font-weight: 300;
+  line-height: 1.8; max-width: 460px;
+  opacity: 0; animation: fadeUp .6s .95s ease forwards;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.hero-right {
+  display: flex; flex-direction: column; justify-content: flex-end;
+  opacity: 0; animation: fadeUp .7s .8s ease forwards;
+}
+.hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--gray-200); border: var(--line); }
+.stat-box {
+  background: var(--white); padding: 28px 24px;
+  position: relative; overflow: hidden; transition: background .2s;
+}
+.stat-box::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+  background: var(--accent); transition: width .25s ease;
+}
+.stat-box:hover::before { width: 3px; }
+.stat-box:hover { background: var(--gray-100); }
+.stat-icon { font-size: 16px; color: var(--gray-300); margin-bottom: 10px; display: block; }
+.stat-num { font-family: 'DM Serif Display', serif; font-size: 30px; line-height: 1; color: var(--black); margin-bottom: 5px; }
+.stat-label { font-size: 11px; color: var(--gray-400); letter-spacing: .04em; }
+
+section { padding: 88px 56px; border-bottom: var(--line); }
+.section-header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 52px; }
+.section-tag {
+  font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent);
+  padding: 3px 10px; border: var(--line-accent); background: var(--accent-light);
+  letter-spacing: .08em; text-transform: uppercase; align-self: center;
+}
+.section-title { font-family: 'DM Serif Display', serif; font-size: clamp(26px,2.8vw,38px); letter-spacing: -.015em; }
+
+.fade-in { opacity:0; transform:translateY(24px); transition:opacity .65s ease,transform .65s ease; }
+.fade-in.visible { opacity:1; transform:translateY(0); }
+.fade-in-d1 { transition-delay:.1s; }
+.fade-in-d2 { transition-delay:.2s; }
+
+/* Current state */
+.current-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+.pain-list { display: flex; flex-direction: column; gap: 0; }
+.pain-item {
+  padding: 18px 0; border-bottom: var(--line);
+  display: flex; gap: 16px; align-items: flex-start;
+}
+.pain-item:first-child { border-top: var(--line); }
+.pain-icon {
+  width: 32px; height: 32px; border-radius: 6px;
+  background: var(--accent-light); border: var(--line-accent);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: var(--accent); font-size: 15px;
+}
+.pain-title { font-size: 14px; font-weight: 500; color: var(--black); margin-bottom: 4px; }
+.pain-body { font-size: 13px; color: var(--gray-600); line-height: 1.7; font-weight: 300; }
+
+/* On-prem stack */
+.onprem-box {
+  background: var(--gray-100); border: var(--line);
+  padding: 32px;
+}
+.onprem-title { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gray-400); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 20px; }
+.onprem-items { display: flex; flex-direction: column; gap: 8px; }
+.onprem-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: var(--white); border: var(--line);
+  font-size: 13px; color: var(--gray-600); font-family: 'DM Mono', monospace;
+}
+.onprem-item i { font-size: 15px; color: var(--accent); }
+
+/* Architecture diagram */
+.arch-wrap {
+  background: #0a0f1a;
+  border: var(--line);
+  padding: 40px 32px 32px;
+  position: relative; overflow: hidden;
+  border-radius: 2px;
+}
+.arch-wrap-label {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: rgba(255,255,255,.3); letter-spacing: .14em; text-transform: uppercase;
+  margin-bottom: 28px;
+}
+.replay-btn {
+  position: absolute; top: 14px; right: 16px;
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .08em;
+  color: #4fc3f7; background: rgba(79,195,247,.08);
+  border: 1px solid rgba(79,195,247,.2);
+  padding: 5px 12px; cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; gap: 5px;
+}
+.replay-btn:hover { background: rgba(79,195,247,.15); }
+.replay-btn i { font-size: 12px; }
+
+/* Migration phases */
+.phases { display: flex; flex-direction: column; gap: 0; border: var(--line); }
+.phase {
+  display: grid; grid-template-columns: 200px 1fr;
+  gap: 0; border-bottom: var(--line);
+}
+.phase:last-child { border-bottom: none; }
+.phase-left {
+  padding: 28px 28px; border-right: var(--line);
+  background: var(--gray-100);
+}
+.phase-num { font-family: 'DM Serif Display', serif; font-size: 40px; color: var(--gray-200); line-height: 1; margin-bottom: 8px; }
+.phase-title { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+.phase-duration { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gray-400); }
+.phase-right { padding: 28px 32px; }
+.phase-desc { font-size: 14px; color: var(--gray-600); font-weight: 300; line-height: 1.8; margin-bottom: 14px; }
+.phase-items { display: flex; flex-direction: column; gap: 5px; }
+.phase-item {
+  font-size: 13px; color: var(--gray-600);
+  padding-left: 16px; position: relative; font-weight: 300;
+}
+.phase-item::before { content:'—'; position:absolute; left:0; color:var(--gray-400); font-family:'DM Mono',monospace; font-size:11px; }
+
+/* Service mapping */
+.mapping-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; border: var(--line); }
+.mapping-col { display: flex; flex-direction: column; }
+.mapping-header {
+  padding: 14px 20px; border-bottom: var(--line);
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--gray-400); letter-spacing: .1em; text-transform: uppercase;
+  background: var(--gray-100);
+}
+.mapping-arrow-col {
+  display: flex; flex-direction: column;
+  border-left: var(--line); border-right: var(--line);
+  background: var(--gray-100);
+}
+.mapping-arrow-header {
+  padding: 14px 16px; border-bottom: var(--line);
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--gray-400); letter-spacing: .1em; text-transform: uppercase;
+}
+.mapping-row {
+  display: flex; align-items: center;
+  padding: 12px 20px; border-bottom: var(--line);
+  font-size: 13px; color: var(--gray-600); font-weight: 300;
+  gap: 8px; min-height: 48px;
+}
+.mapping-row:last-child { border-bottom: none; }
+.mapping-row i { font-size: 15px; color: var(--accent); flex-shrink: 0; }
+.mapping-arrow-row {
+  display: flex; align-items: center; justify-content: center;
+  padding: 12px 16px; border-bottom: var(--line);
+  font-size: 14px; color: var(--accent); min-height: 48px;
+}
+.mapping-arrow-row:last-child { border-bottom: none; }
+.mapping-tag {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  padding: 2px 6px; background: var(--accent-light);
+  color: var(--accent); border: var(--line-accent); margin-left: auto; flex-shrink: 0;
+}
+
+/* Risk table */
+.risk-grid { display: grid; grid-template-columns: 1fr; gap: 0; border: var(--line); }
+.risk-row {
+  display: grid; grid-template-columns: 240px 1fr 100px;
+  gap: 0; border-bottom: var(--line);
+}
+.risk-row:last-child { border-bottom: none; }
+.risk-row.header { background: var(--gray-100); }
+.risk-cell {
+  padding: 14px 20px; border-right: var(--line); font-size: 13px;
+  color: var(--gray-600); font-weight: 300; line-height: 1.6;
+}
+.risk-cell:last-child { border-right: none; }
+.risk-cell.header-cell { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gray-400); letter-spacing: .1em; text-transform: uppercase; font-weight: 400; }
+.risk-badge {
+  display: inline-block; font-family: 'DM Mono', monospace; font-size: 10px;
+  padding: 3px 8px; letter-spacing: .06em;
+}
+.badge-high { background: rgba(183,65,14,.08); color: #b7410e; border: 1px solid rgba(183,65,14,.2); }
+.badge-med { background: rgba(183,140,14,.08); color: #b78c0e; border: 1px solid rgba(183,140,14,.2); }
+.badge-low { background: rgba(45,106,79,.08); color: #2d6a4f; border: 1px solid rgba(45,106,79,.2); }
+
+/* Stack decisions */
+.stack-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; border: var(--line); }
+.stack-item { padding: 28px 24px; border-right: var(--line); border-bottom: var(--line); transition: background .2s; }
+.stack-item:nth-child(3n) { border-right: none; }
+.stack-item:nth-last-child(-n+3) { border-bottom: none; }
+.stack-item:hover { background: var(--gray-100); }
+.stack-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.stack-item-icon { font-size: 20px; color: var(--accent); }
+.stack-item-name { font-family: 'DM Serif Display', serif; font-size: 17px; }
+.stack-item-why { font-size: 13px; color: var(--gray-600); line-height: 1.7; font-weight: 300; }
+.stack-item-tag { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent); margin-top: 10px; display: block; letter-spacing: .06em; }
+
+/* Bottom nav */
+.bottom-nav { padding: 56px 56px; display: flex; justify-content: space-between; align-items: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 26px; font-size: 13px; font-weight: 400;
+  text-decoration: none; letter-spacing: .02em;
+  transition: all .2s; cursor: none; border: none;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn i { font-size: 15px; }
+.btn-outline { background: transparent; color: var(--black); border: var(--line); }
+.btn-outline:hover { background: var(--gray-100); }
+.next-case { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-decoration: none; color: var(--black); transition: opacity .2s; }
+.next-case:hover { opacity: .7; }
+.next-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gray-400); letter-spacing: .08em; }
+.next-title { font-family: 'DM Serif Display', serif; font-size: 20px; }
+
+footer { padding: 28px 56px; border-top: var(--line); display: flex; justify-content: space-between; align-items: center; }
+.footer-copy { font-family:'DM Mono',monospace; font-size:11px; color:var(--gray-400); }
+.footer-links { display:flex; gap:24px; }
+.footer-link { font-family:'DM Mono',monospace; font-size:11px; color:var(--gray-400); text-decoration:none; transition:color .2s; display:flex; align-items:center; gap:5px; }
+.footer-link:hover { color:var(--black); }
+
+@media(max-width:960px){
+  nav,.bottom-nav,footer { padding-left:28px; padding-right:28px; }
+  .hero { padding:110px 28px 60px; }
+  .hero-num { display:none; }
+  section { padding:64px 28px; }
+  .hero-grid,.current-grid { grid-template-columns:1fr; gap:40px; }
+  .phases .phase { grid-template-columns:1fr; }
+  .phase-left { border-right:none; border-bottom:var(--line); }
+  .mapping-grid { grid-template-columns:1fr; }
+  .mapping-arrow-col { display:none; }
+  .stack-grid { grid-template-columns:1fr 1fr; }
+  .risk-row { grid-template-columns:1fr; }
+  .risk-cell { border-right:none; border-bottom:var(--line); }
+  .bottom-nav { flex-direction:column; gap:32px; align-items:flex-start; }
+}
+@media(max-width:600px){
+  .stack-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<nav>
+  <div class="nav-left">
+    <a href="/" class="nav-back"><i class="ti ti-arrow-left"></i>Portfolio</a>
+    <div class="nav-divider"></div>
+    <span class="nav-title">Case Study</span>
+  </div>
+  <div class="nav-tag">002 · Cloud Architecture</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-dots"></div>
+  <div class="hero-accent-line"></div>
+  <div class="hero-num">002</div>
+  <div class="hero-grid">
+    <div>
+      <p class="hero-eyebrow">Cloud Migration · Architecture Design</p>
+      <div class="status-pill"><div class="status-dot-orange"></div>Architecture Design Phase — Implementation Planned</div>
+      <h1 class="hero-title">
+        <span class="hero-title-line">On-Premise</span>
+        <span class="hero-title-line">to Huawei</span>
+        <span class="hero-title-line">Cloud</span>
+      </h1>
+      <p class="hero-sub"><i class="ti ti-cloud-upload"></i>Phased migration · Zero data loss · Parallel running strategy</p>
+      <p class="hero-desc">
+        Designed the full architecture and migration plan for moving a government-grade platform 
+        from an on-premise Proxmox datacenter to Huawei Cloud. This case study documents the 
+        target architecture, phased migration strategy, service mapping, and risk considerations 
+        that went into the design.
+      </p>
+    </div>
+    <div class="hero-right">
+      <div class="hero-stats">
+        <div class="stat-box">
+          <i class="ti ti-server stat-icon"></i>
+          <div class="stat-num">8+</div>
+          <div class="stat-label">Services Migrated</div>
+        </div>
+        <div class="stat-box">
+          <i class="ti ti-cloud stat-icon"></i>
+          <div class="stat-num">2</div>
+          <div class="stat-label">CCE Regions (KR+INA)</div>
+        </div>
+        <div class="stat-box">
+          <i class="ti ti-git-branch stat-icon"></i>
+          <div class="stat-num">3</div>
+          <div class="stat-label">Migration Phases</div>
+        </div>
+        <div class="stat-box">
+          <i class="ti ti-shield stat-icon"></i>
+          <div class="stat-num">VPN</div>
+          <div class="stat-label">WireGuard Tunnel</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CURRENT STATE -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">01</div>
+    <h2 class="section-title">Current State & Pain Points</h2>
+  </div>
+  <div class="current-grid fade-in">
+    <div class="pain-list">
+      <div class="pain-item">
+        <div class="pain-icon"><i class="ti ti-server-off"></i></div>
+        <div>
+          <div class="pain-title">On-Premise Hardware Limits</div>
+          <div class="pain-body">Proxmox-based datacenter has fixed capacity. Scaling requires physical hardware procurement — slow and expensive compared to cloud elasticity.</div>
+        </div>
+      </div>
+      <div class="pain-item">
+        <div class="pain-icon"><i class="ti ti-database-off"></i></div>
+        <div>
+          <div class="pain-title">Manual Database Management</div>
+          <div class="pain-body">MariaDB master-replica setup requires manual failover. No automated backup management or point-in-time recovery built in.</div>
+        </div>
+      </div>
+      <div class="pain-item">
+        <div class="pain-icon"><i class="ti ti-eye-off"></i></div>
+        <div>
+          <div class="pain-title">Limited Observability</div>
+          <div class="pain-body">Basic monitoring setup. No centralized log management, no cloud-native alerting, and no security scanning across the infrastructure.</div>
+        </div>
+      </div>
+      <div class="pain-item">
+        <div class="pain-icon"><i class="ti ti-alert-triangle"></i></div>
+        <div>
+          <div class="pain-title">No Geographic Redundancy</div>
+          <div class="pain-body">Single datacenter location. Any regional disruption takes down the entire platform with no automatic failover to a backup site.</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="onprem-box">
+        <div class="onprem-title">Current On-Premise Stack</div>
+        <div class="onprem-items">
+          <div class="onprem-item"><i class="ti ti-server"></i>Proxmox Node — Application Services</div>
+          <div class="onprem-item"><i class="ti ti-server"></i>Proxmox Node — Databases</div>
+          <div class="onprem-item"><i class="ti ti-database"></i>MariaDB Master + Replica</div>
+          <div class="onprem-item"><i class="ti ti-database"></i>MongoDB Instance</div>
+          <div class="onprem-item"><i class="ti ti-adjustments"></i>Load Balancer (on-prem)</div>
+          <div class="onprem-item"><i class="ti ti-hexagons"></i>Kubernetes Node (single)</div>
+          <div class="onprem-item"><i class="ti ti-shield"></i>Public DNS + Firewall/VPN</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TARGET ARCHITECTURE -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">02</div>
+    <h2 class="section-title">Target Architecture</h2>
+  </div>
+  <p class="fade-in" style="font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8;max-width:700px;margin-bottom:36px">
+    The target architecture separates concerns across Huawei Cloud managed services — 
+    compute in CCE, databases in RDS, messaging in DMS, object storage in OBS. 
+    A WireGuard VPN tunnel maintains connectivity to on-premise during the phased migration period.
+  </p>
+
+  <div class="arch-wrap fade-in fade-in-d1" id="archContainer">
+    <div class="arch-wrap-label">Target Architecture · Huawei Cloud</div>
+    <button class="replay-btn" onclick="runArchAnim()"><i class="ti ti-refresh"></i>Replay</button>
+
+    <svg id="archSvg" viewBox="0 0 960 680" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%">
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(79,195,247,0.7)"/>
+        </marker>
+        <marker id="arr-vpn" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(255,183,77,0.8)"/>
+        </marker>
+      </defs>
+
+      <!-- STEP 1: User/DNS layer -->
+      <g id="s-user" opacity="0" transform="translate(0,-8)">
+        <circle cx="480" cy="28" r="18" fill="rgba(79,195,247,0.15)" stroke="rgba(79,195,247,0.5)" stroke-width="1.5"/>
+        <text x="480" y="33" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#4fc3f7">USER</text>
+        <line x1="480" y1="46" x2="480" y2="62" stroke="rgba(79,195,247,0.5)" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="430" y="62" width="100" height="24" rx="3" fill="rgba(79,195,247,0.1)" stroke="rgba(79,195,247,0.3)" stroke-width="1"/>
+        <text x="480" y="78" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#4fc3f7">Public DNS</text>
+      </g>
+
+      <!-- STEP 2: WAF + Security -->
+      <g id="s-waf" opacity="0" transform="translate(0,-6)">
+        <line x1="480" y1="86" x2="480" y2="102" stroke="rgba(79,195,247,0.5)" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="420" y="102" width="120" height="24" rx="3" fill="rgba(244,67,54,0.1)" stroke="rgba(244,67,54,0.3)" stroke-width="1"/>
+        <text x="480" y="118" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#ef9a9a">WAF · Firewall</text>
+        <line x1="480" y1="126" x2="480" y2="142" stroke="rgba(79,195,247,0.5)" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="430" y="142" width="100" height="24" rx="3" fill="rgba(79,195,247,0.1)" stroke="rgba(79,195,247,0.3)" stroke-width="1"/>
+        <text x="480" y="158" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#4fc3f7">Public IP</text>
+      </g>
+
+      <!-- STEP 3: Load Balancers -->
+      <g id="s-lb" opacity="0" transform="translate(0,-6)">
+        <line x1="400" y1="166" x2="300" y2="192" stroke="rgba(79,195,247,0.4)" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="560" y1="166" x2="660" y2="192" stroke="rgba(79,195,247,0.4)" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="220" y="192" width="160" height="30" rx="4" fill="rgba(26,74,107,0.3)" stroke="rgba(79,195,247,0.4)" stroke-width="1.5"/>
+        <text x="300" y="211" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#4fc3f7" font-weight="500">ELB · Load Balancer KR</text>
+        <rect x="580" y="192" width="160" height="30" rx="4" fill="rgba(26,74,107,0.3)" stroke="rgba(79,195,247,0.4)" stroke-width="1.5"/>
+        <text x="660" y="211" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#4fc3f7" font-weight="500">ELB · Load Balancer INA</text>
+      </g>
+
+      <!-- STEP 4: CCE Cluster zone -->
+      <g id="s-cce-zone" opacity="0">
+        <rect x="180" y="242" width="600" height="180" rx="5" fill="rgba(26,74,107,0.12)" stroke="rgba(79,195,247,0.2)" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="196" y="258" font-family="'DM Mono',monospace" font-size="9" fill="rgba(79,195,247,0.5)" letter-spacing="2">CCE CLUSTER · Kubernetes + NIC + Cert Manager</text>
+      </g>
+
+      <!-- STEP 5: CCE Nodes KR -->
+      <g id="s-nodes-kr" opacity="0" transform="translate(-8,0)">
+        <rect x="200" y="264" width="270" height="140" rx="4" fill="rgba(26,74,107,0.15)" stroke="rgba(79,195,247,0.2)" stroke-width="1" stroke-dasharray="3 2"/>
+        <text x="335" y="278" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(79,195,247,0.4)" letter-spacing="1">namespace: prod-kr</text>
+        <rect x="212" y="284" width="58" height="36" rx="3" fill="rgba(26,74,107,0.3)" stroke="rgba(79,195,247,0.3)" stroke-width="1"/>
+        <text x="241" y="300" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">kube01</text>
+        <text x="241" y="312" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">apigw</text>
+        <rect x="278" y="284" width="58" height="36" rx="3" fill="rgba(26,74,107,0.3)" stroke="rgba(79,195,247,0.3)" stroke-width="1"/>
+        <text x="307" y="300" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">kube02</text>
+        <text x="307" y="312" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">service</text>
+        <rect x="344" y="284" width="58" height="36" rx="3" fill="rgba(26,74,107,0.3)" stroke="rgba(79,195,247,0.3)" stroke-width="1"/>
+        <text x="373" y="300" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">web01</text>
+        <text x="373" y="312" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">frontend</text>
+
+        <!-- Temporal namespace -->
+        <rect x="212" y="332" width="190" height="60" rx="3" fill="rgba(26,74,107,0.1)" stroke="rgba(79,195,247,0.15)" stroke-width="1" stroke-dasharray="3 2"/>
+        <text x="307" y="346" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.35)" letter-spacing="1">namespace: temporal</text>
+        <rect x="220" y="352" width="68" height="30" rx="3" fill="rgba(26,74,107,0.3)" stroke="rgba(79,195,247,0.3)" stroke-width="1"/>
+        <text x="254" y="365" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#4fc3f7">temporal</text>
+        <text x="254" y="376" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.5)">workflow</text>
+        <rect x="296" y="352" width="68" height="30" rx="3" fill="rgba(26,74,107,0.3)" stroke="rgba(79,195,247,0.3)" stroke-width="1"/>
+        <text x="330" y="365" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#4fc3f7">temporal-ui</text>
+        <text x="330" y="376" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.5)">dashboard</text>
+      </g>
+
+      <!-- STEP 6: CCE Nodes INA -->
+      <g id="s-nodes-ina" opacity="0" transform="translate(8,0)">
+        <rect x="490" y="264" width="270" height="140" rx="4" fill="rgba(26,74,107,0.15)" stroke="rgba(79,195,247,0.2)" stroke-width="1" stroke-dasharray="3 2"/>
+        <text x="625" y="278" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(79,195,247,0.4)" letter-spacing="1">namespace: prod-ina</text>
+        <rect x="502" y="284" width="68" height="36" rx="3" fill="rgba(26,74,107,0.3)" stroke="rgba(79,195,247,0.3)" stroke-width="1"/>
+        <text x="536" y="300" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">ina-svc01</text>
+        <text x="536" y="312" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">services</text>
+        <rect x="578" y="284" width="68" height="36" rx="3" fill="rgba(26,74,107,0.3)" stroke="rgba(79,195,247,0.3)" stroke-width="1"/>
+        <text x="612" y="300" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">ina-web01</text>
+        <text x="612" y="312" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">frontend</text>
+        <rect x="500" y="332" width="250" height="60" rx="3" fill="rgba(26,74,107,0.1)" stroke="rgba(79,195,247,0.15)" stroke-width="1" stroke-dasharray="3 2"/>
+        <text x="625" y="346" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.35)" letter-spacing="1">ECS: CI/CD + Monitoring</text>
+        <rect x="508" y="352" width="100" height="30" rx="3" fill="rgba(26,74,107,0.3)" stroke="rgba(79,195,247,0.3)" stroke-width="1"/>
+        <text x="558" y="366" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#4fc3f7">Jenkins · CI/CD</text>
+        <text x="558" y="376" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.5)">pipeline</text>
+        <rect x="616" y="352" width="100" height="30" rx="3" fill="rgba(26,74,107,0.3)" stroke="rgba(79,195,247,0.3)" stroke-width="1"/>
+        <text x="666" y="366" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#4fc3f7">monitoring01</text>
+        <text x="666" y="376" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.5)">Grafana+Prometheus</text>
+      </g>
+
+      <!-- STEP 7: Managed Services -->
+      <g id="s-managed" opacity="0" transform="translate(0,8)">
+        <rect x="60" y="440" width="840" height="100" rx="4" fill="rgba(26,74,107,0.08)" stroke="rgba(79,195,247,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="80" y="456" font-family="'DM Mono',monospace" font-size="9" fill="rgba(79,195,247,0.4)" letter-spacing="2">MANAGED SERVICES</text>
+        <!-- RDS -->
+        <rect x="76" y="462" width="88" height="64" rx="3" fill="rgba(26,74,107,0.2)" stroke="rgba(79,195,247,0.2)" stroke-width="1"/>
+        <text x="120" y="482" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">RDS KR</text>
+        <text x="120" y="494" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">MariaDB</text>
+        <text x="120" y="506" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">Primary+Replica</text>
+        <text x="120" y="519" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.35)">managed</text>
+
+        <rect x="172" y="462" width="88" height="64" rx="3" fill="rgba(26,74,107,0.2)" stroke="rgba(79,195,247,0.2)" stroke-width="1"/>
+        <text x="216" y="482" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">RDS INA</text>
+        <text x="216" y="494" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">MariaDB</text>
+        <text x="216" y="506" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">Primary</text>
+        <text x="216" y="519" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.35)">managed</text>
+
+        <rect x="268" y="462" width="88" height="64" rx="3" fill="rgba(26,74,107,0.2)" stroke="rgba(79,195,247,0.2)" stroke-width="1"/>
+        <text x="312" y="482" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">RDS Temporal</text>
+        <text x="312" y="494" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">MariaDB</text>
+        <text x="312" y="506" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">Workflow DB</text>
+        <text x="312" y="519" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.35)">managed</text>
+
+        <rect x="364" y="462" width="76" height="64" rx="3" fill="rgba(26,74,107,0.2)" stroke="rgba(79,195,247,0.2)" stroke-width="1"/>
+        <text x="402" y="482" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">DMS</text>
+        <text x="402" y="494" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">RabbitMQ</text>
+        <text x="402" y="506" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">messaging</text>
+        <text x="402" y="519" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.35)">managed</text>
+
+        <rect x="448" y="462" width="76" height="64" rx="3" fill="rgba(26,74,107,0.2)" stroke="rgba(79,195,247,0.2)" stroke-width="1"/>
+        <text x="486" y="482" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">DDS</text>
+        <text x="486" y="494" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">MongoDB</text>
+        <text x="486" y="506" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">document db</text>
+        <text x="486" y="519" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.35)">managed</text>
+
+        <rect x="532" y="462" width="76" height="64" rx="3" fill="rgba(26,74,107,0.2)" stroke="rgba(79,195,247,0.2)" stroke-width="1"/>
+        <text x="570" y="482" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">DCS</text>
+        <text x="570" y="494" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">Redis</text>
+        <text x="570" y="506" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">cache/session</text>
+        <text x="570" y="519" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.35)">managed</text>
+
+        <rect x="616" y="462" width="76" height="64" rx="3" fill="rgba(26,74,107,0.2)" stroke="rgba(79,195,247,0.2)" stroke-width="1"/>
+        <text x="654" y="482" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">OBS</text>
+        <text x="654" y="494" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">Object</text>
+        <text x="654" y="506" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">Storage</text>
+        <text x="654" y="519" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.35)">managed</text>
+
+        <rect x="700" y="462" width="88" height="64" rx="3" fill="rgba(26,74,107,0.2)" stroke="rgba(79,195,247,0.2)" stroke-width="1"/>
+        <text x="744" y="482" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">Container</text>
+        <text x="744" y="494" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">Registry</text>
+        <text x="744" y="506" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.5)">SWR</text>
+        <text x="744" y="519" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(79,195,247,0.35)">managed</text>
+      </g>
+
+      <!-- STEP 8: Observability -->
+      <g id="s-obs" opacity="0" transform="translate(0,6)">
+        <rect x="60" y="556" width="840" height="60" rx="4" fill="rgba(26,74,107,0.06)" stroke="rgba(79,195,247,0.12)" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="80" y="572" font-family="'DM Mono',monospace" font-size="9" fill="rgba(79,195,247,0.35)" letter-spacing="2">OBSERVABILITY · SECURITY · ALERTING</text>
+        <rect x="80" y="578" width="80" height="28" rx="3" fill="rgba(26,74,107,0.15)" stroke="rgba(79,195,247,0.15)" stroke-width="1"/>
+        <text x="120" y="592" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">LTS</text>
+        <text x="120" y="602" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.4)">Log Service</text>
+        <rect x="168" y="578" width="80" height="28" rx="3" fill="rgba(26,74,107,0.15)" stroke="rgba(79,195,247,0.15)" stroke-width="1"/>
+        <text x="208" y="592" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">CES</text>
+        <text x="208" y="602" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.4)">Cloud Eye</text>
+        <rect x="256" y="578" width="80" height="28" rx="3" fill="rgba(26,74,107,0.15)" stroke="rgba(79,195,247,0.15)" stroke-width="1"/>
+        <text x="296" y="592" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">HSS</text>
+        <text x="296" y="602" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.4)">Host Security</text>
+        <rect x="344" y="578" width="80" height="28" rx="3" fill="rgba(26,74,107,0.15)" stroke="rgba(79,195,247,0.15)" stroke-width="1"/>
+        <text x="384" y="592" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#4fc3f7">SMN</text>
+        <text x="384" y="602" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(79,195,247,0.4)">Notifications</text>
+      </g>
+
+      <!-- STEP 9: VPN Tunnel (on-prem connection) -->
+      <g id="s-vpn" opacity="0">
+        <rect x="20" y="300" width="130" height="100" rx="4" fill="rgba(26,74,107,0.08)" stroke="rgba(255,183,77,0.2)" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="85" y="316" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(255,183,77,0.5)" letter-spacing="1">ON-PREMISE</text>
+        <rect x="30" y="322" width="110" height="34" rx="3" fill="rgba(255,183,77,0.08)" stroke="rgba(255,183,77,0.2)" stroke-width="1"/>
+        <text x="85" y="338" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ffb74d">App Servers</text>
+        <text x="85" y="350" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(255,183,77,0.5)">Proxmox</text>
+        <rect x="30" y="362" width="110" height="28" rx="3" fill="rgba(255,183,77,0.08)" stroke="rgba(255,183,77,0.2)" stroke-width="1"/>
+        <text x="85" y="377" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ffb74d">DB Servers</text>
+        <text x="85" y="388" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(255,183,77,0.5)">MariaDB · MongoDB</text>
+
+        <!-- VPN connection line -->
+        <line x1="150" y1="350" x2="178" y2="350" stroke="rgba(255,183,77,0.5)" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr-vpn)"/>
+        <rect x="154" y="340" width="50" height="20" rx="2" fill="rgba(255,183,77,0.08)" stroke="rgba(255,183,77,0.2)" stroke-width="1"/>
+        <text x="179" y="354" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#ffb74d">WireGuard</text>
+      </g>
+
+    </svg>
+  </div>
+</section>
+
+<!-- MIGRATION STRATEGY -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">03</div>
+    <h2 class="section-title">Migration Strategy</h2>
+  </div>
+  <p class="fade-in" style="font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8;max-width:680px;margin-bottom:40px">
+    The migration is designed as a phased approach — cloud infrastructure runs in parallel with 
+    on-premise until the cloud environment is fully stable. Only then does DNS cutover happen, 
+    and on-premise is decommissioned. This eliminates big-bang migration risk.
+  </p>
+  <div class="phases fade-in fade-in-d1">
+    <div class="phase">
+      <div class="phase-left">
+        <div class="phase-num">01</div>
+        <div class="phase-title">Infrastructure Setup</div>
+        <div class="phase-duration">Est. 2–3 weeks</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-desc">Provision all Huawei Cloud resources. Set up VPC, CCE clusters, managed services (RDS, DMS, DDS, DCS), and establish WireGuard VPN tunnel to on-premise datacenter.</div>
+        <div class="phase-items">
+          <div class="phase-item">Provision VPC, subnets, security groups</div>
+          <div class="phase-item">Deploy CCE cluster with KR and INA node pools</div>
+          <div class="phase-item">Configure RDS instances (MariaDB KR, INA, Temporal)</div>
+          <div class="phase-item">Set up DMS (RabbitMQ), DDS (MongoDB), DCS (Redis)</div>
+          <div class="phase-item">Establish WireGuard VPN tunnel for on-prem connectivity</div>
+          <div class="phase-item">Configure Container Registry (SWR) and update CI/CD pipeline</div>
+        </div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="phase-left">
+        <div class="phase-num">02</div>
+        <div class="phase-title">Parallel Running</div>
+        <div class="phase-duration">Est. 3–4 weeks</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-desc">Deploy all application workloads to cloud while on-premise continues serving production traffic. Validate cloud environment thoroughly — data sync, performance benchmarks, and failover testing.</div>
+        <div class="phase-items">
+          <div class="phase-item">Deploy all services to CCE — mirror on-prem configuration</div>
+          <div class="phase-item">Set up database replication from on-prem to RDS (initial sync)</div>
+          <div class="phase-item">Run parallel traffic testing via internal DNS</div>
+          <div class="phase-item">Validate observability stack (LTS, CES, HSS, SMN)</div>
+          <div class="phase-item">Performance and load testing on cloud environment</div>
+          <div class="phase-item">Document rollback procedure and train team on cloud operations</div>
+        </div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="phase-left">
+        <div class="phase-num">03</div>
+        <div class="phase-title">DNS Cutover & Decom</div>
+        <div class="phase-duration">Est. 1–2 weeks</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-desc">Switch production DNS to cloud. On-premise remains on standby for 1–2 weeks as rollback option. Once stable, decommission on-premise infrastructure and remove VPN tunnel.</div>
+        <div class="phase-items">
+          <div class="phase-item">Lower DNS TTL 48 hours before cutover</div>
+          <div class="phase-item">Execute DNS cutover during low-traffic window</div>
+          <div class="phase-item">Monitor cloud environment intensively for 72 hours post-cutover</div>
+          <div class="phase-item">Keep on-premise on standby for 1–2 weeks as rollback</div>
+          <div class="phase-item">Decommission on-premise once cloud is confirmed stable</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICE MAPPING -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">04</div>
+    <h2 class="section-title">Service Mapping</h2>
+  </div>
+  <div class="mapping-grid fade-in">
+    <div class="mapping-col">
+      <div class="mapping-header">On-Premise</div>
+      <div class="mapping-row"><i class="ti ti-server"></i>Proxmox KVM — App Servers</div>
+      <div class="mapping-row"><i class="ti ti-hexagons"></i>Self-managed Kubernetes</div>
+      <div class="mapping-row"><i class="ti ti-database"></i>MariaDB Master + Replica</div>
+      <div class="mapping-row"><i class="ti ti-database"></i>MongoDB Instance</div>
+      <div class="mapping-row"><i class="ti ti-brand-redis"></i>Redis (self-managed)</div>
+      <div class="mapping-row"><i class="ti ti-message-circle"></i>RabbitMQ (self-managed)</div>
+      <div class="mapping-row"><i class="ti ti-adjustments"></i>HAProxy Load Balancer</div>
+      <div class="mapping-row"><i class="ti ti-ship"></i>Harbor Registry (planned)</div>
+      <div class="mapping-row"><i class="ti ti-chart-bar"></i>Prometheus + Grafana</div>
+      <div class="mapping-row"><i class="ti ti-file-text"></i>Manual log collection</div>
+    </div>
+    <div class="mapping-arrow-col">
+      <div class="mapping-arrow-header">→</div>
+      <div class="mapping-arrow-row">→</div>
+      <div class="mapping-arrow-row">→</div>
+      <div class="mapping-arrow-row">→</div>
+      <div class="mapping-arrow-row">→</div>
+      <div class="mapping-arrow-row">→</div>
+      <div class="mapping-arrow-row">→</div>
+      <div class="mapping-arrow-row">→</div>
+      <div class="mapping-arrow-row">→</div>
+      <div class="mapping-arrow-row">→</div>
+      <div class="mapping-arrow-row">→</div>
+    </div>
+    <div class="mapping-col">
+      <div class="mapping-header">Huawei Cloud</div>
+      <div class="mapping-row"><i class="ti ti-cloud"></i>ECS — Elastic Cloud Server<span class="mapping-tag">managed</span></div>
+      <div class="mapping-row"><i class="ti ti-hexagons"></i>CCE — Cloud Container Engine<span class="mapping-tag">managed</span></div>
+      <div class="mapping-row"><i class="ti ti-database"></i>RDS — MariaDB (KR + INA + Temporal)<span class="mapping-tag">managed</span></div>
+      <div class="mapping-row"><i class="ti ti-database"></i>DDS — Document Database Service<span class="mapping-tag">managed</span></div>
+      <div class="mapping-row"><i class="ti ti-brand-redis"></i>DCS — Distributed Cache Service<span class="mapping-tag">managed</span></div>
+      <div class="mapping-row"><i class="ti ti-message-circle"></i>DMS — Distributed Message Service<span class="mapping-tag">managed</span></div>
+      <div class="mapping-row"><i class="ti ti-adjustments"></i>ELB — Elastic Load Balancer<span class="mapping-tag">managed</span></div>
+      <div class="mapping-row"><i class="ti ti-ship"></i>SWR — Software Repository<span class="mapping-tag">managed</span></div>
+      <div class="mapping-row"><i class="ti ti-chart-bar"></i>CES (Cloud Eye) + ECS Grafana<span class="mapping-tag">hybrid</span></div>
+      <div class="mapping-row"><i class="ti ti-file-text"></i>LTS — Log Tank Service<span class="mapping-tag">managed</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- RISKS -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">05</div>
+    <h2 class="section-title">Risks & Mitigations</h2>
+  </div>
+  <div class="risk-grid fade-in">
+    <div class="risk-row header">
+      <div class="risk-cell header-cell">Risk</div>
+      <div class="risk-cell header-cell">Mitigation</div>
+      <div class="risk-cell header-cell">Severity</div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-cell">DNS cutover causes downtime due to propagation delay</div>
+      <div class="risk-cell">Lower TTL 48hrs before cutover. Execute during low-traffic window. Keep on-prem on standby for 1–2 weeks as rollback.</div>
+      <div class="risk-cell"><span class="risk-badge badge-high">High</span></div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-cell">Data loss during database migration</div>
+      <div class="risk-cell">Use replication to sync on-prem to RDS before cutover. Validate data consistency before switching traffic. Full backup before any cutover step.</div>
+      <div class="risk-cell"><span class="risk-badge badge-high">High</span></div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-cell">Performance degradation in cloud vs on-prem</div>
+      <div class="risk-cell">Run parallel load tests during Phase 2. Tune instance sizes and database parameters before cutover.</div>
+      <div class="risk-cell"><span class="risk-badge badge-med">Medium</span></div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-cell">WireGuard VPN instability during parallel phase</div>
+      <div class="risk-cell">VPN is only used for migration sync — cloud environment is designed to be fully independent. Instability only affects migration speed, not production.</div>
+      <div class="risk-cell"><span class="risk-badge badge-med">Medium</span></div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-cell">Team unfamiliarity with Huawei Cloud services</div>
+      <div class="risk-cell">Phase 1 deliberately slower to allow team learning. Document all Huawei-specific configurations. Use Huawei support during initial setup.</div>
+      <div class="risk-cell"><span class="risk-badge badge-low">Low</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK DECISIONS -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">06</div>
+    <h2 class="section-title">Key Design Decisions</h2>
+  </div>
+  <div class="stack-grid fade-in">
+    <div class="stack-item">
+      <div class="stack-item-header"><i class="ti ti-git-branch stack-item-icon"></i><div class="stack-item-name">Phased Migration</div></div>
+      <div class="stack-item-why">Big-bang migrations are high-risk. Running cloud parallel to on-prem until stable means the business never goes fully dark during migration. The cost of running both environments temporarily is worth the reduced risk.</div>
+      <span class="stack-item-tag">// Strategy</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-item-header"><i class="ti ti-shield stack-item-icon"></i><div class="stack-item-name">WireGuard VPN</div></div>
+      <div class="stack-item-why">WireGuard provides a secure, high-performance tunnel between on-premise and cloud during the migration window. It's simpler to configure than IPSec and has lower latency — critical for database replication sync.</div>
+      <span class="stack-item-tag">// Connectivity</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-item-header"><i class="ti ti-database stack-item-icon"></i><div class="stack-item-name">Managed RDS over Self-Managed</div></div>
+      <div class="stack-item-why">Huawei RDS handles automated backups, point-in-time recovery, and failover. Eliminates the operational burden of managing MariaDB replication manually — which was a pain point in the on-premise setup.</div>
+      <span class="stack-item-tag">// Database</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-item-header"><i class="ti ti-topology-star stack-item-icon"></i><div class="stack-item-name">Dual Region (KR + INA)</div></div>
+      <div class="stack-item-why">Separate CCE node pools and RDS instances for KR and INA regions provides geographic isolation. Each region can operate independently, and ELB routes traffic to the appropriate region based on load.</div>
+      <span class="stack-item-tag">// Architecture</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-item-header"><i class="ti ti-eye stack-item-icon"></i><div class="stack-item-name">Huawei Native Observability</div></div>
+      <div class="stack-item-why">LTS for centralized logs, CES for infrastructure metrics, HSS for host security scanning, and SMN for alerting. Using cloud-native tools reduces operational overhead vs running the full observability stack ourselves.</div>
+      <span class="stack-item-tag">// Observability</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-item-header"><i class="ti ti-ship stack-item-icon"></i><div class="stack-item-name">SWR Container Registry</div></div>
+      <div class="stack-item-why">Huawei SWR keeps all container images inside the cloud environment — no external registry dependency in production. Jenkins pushes to SWR, ArgoCD pulls from SWR. Simple, secure, and low-latency.</div>
+      <span class="stack-item-tag">// CI/CD</span>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav fade-in">
+  <a href="/" class="btn btn-outline"><i class="ti ti-arrow-left"></i>Back to Portfolio</a>
+  <a href="/case-galera" class="next-case">
+    <span class="next-label">Next Case Study →</span>
+    <span class="next-title">MariaDB Galera Cluster</span>
+  </a>
+</div>
+
+<footer>
+  <span class="footer-copy">© 2026 Noval Ramdani</span>
+  <div class="footer-links">
+    <a href="/" class="footer-link"><i class="ti ti-user"></i>Portfolio</a>
+    <a href="https://linkedin.com/in/noval-ramdani" target="_blank" class="footer-link"><i class="ti ti-brand-linkedin"></i>LinkedIn</a>
+    <a href="mailto:novalramdani.work@gmail.com" class="footer-link"><i class="ti ti-mail"></i>Email</a>
+  </div>
+</footer>
+
+<script>
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+function animateCursor(){
+  cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+  rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+document.querySelectorAll('a,button,.stat-box,.stack-item,.phase,.risk-row,.mapping-row').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cursor.classList.add('hovered');ring.classList.add('hovered');});
+  el.addEventListener('mouseleave',()=>{cursor.classList.remove('hovered');ring.classList.remove('hovered');});
+});
+
+const observer = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:.08});
+document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
+
+// Architecture animation
+const steps = ['s-user','s-waf','s-lb','s-cce-zone','s-nodes-kr','s-nodes-ina','s-managed','s-obs','s-vpn'];
+const initTransforms = {
+  's-user':'translate(0,-8)', 's-waf':'translate(0,-6)', 's-lb':'translate(0,-6)',
+  's-nodes-kr':'translate(-8,0)', 's-nodes-ina':'translate(8,0)',
+  's-managed':'translate(0,8)', 's-obs':'translate(0,6)', 's-vpn':''
+};
+
+function animEl(id, delay) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) { resolve(); return; }
+      el.style.transition = 'opacity .55s ease, transform .55s ease';
+      el.style.opacity = '1';
+      el.style.transform = 'translate(0,0)';
+      setTimeout(resolve, 580);
+    }, delay);
+  });
+}
+
+async function runArchAnim() {
+  steps.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.transition = 'none';
+      el.style.opacity = '0';
+      el.style.transform = initTransforms[id] || '';
+    }
+  });
+  await new Promise(r => setTimeout(r, 100));
+  for (const id of steps) {
+    await animEl(id, 0);
+  }
+}
+
+const archObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      setTimeout(runArchAnim, 400);
+      archObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.2 });
+const archEl = document.getElementById('archContainer');
+if (archEl) archObs.observe(archEl);
+</script>
+</body>
+</html>
