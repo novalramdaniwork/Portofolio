@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubernetes Infrastructure — Noval Ramdani</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #0d0d0d;
+  --white: #fafaf8;
+  --gray-100: #f4f4f2;
+  --gray-200: #e8e8e4;
+  --gray-400: #9a9a94;
+  --gray-600: #5a5a54;
+  --accent: #2d6a4f;
+  --accent-light: rgba(45,106,79,.08);
+  --accent-mid: rgba(45,106,79,.2);
+  --line: 1px solid #e0e0da;
+  --line-accent: 1px solid rgba(45,106,79,.25);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--white);
+  color: var(--black);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ── CURSOR ── */
+.cursor {
+  position: fixed; width: 10px; height: 10px;
+  border-radius: 50%; background: var(--black);
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: width .2s, height .2s, background .2s;
+}
+.cursor-ring {
+  position: fixed; width: 36px; height: 36px;
+  border-radius: 50%; border: 1px solid var(--black);
+  pointer-events: none; z-index: 9998;
+  transform: translate(-50%,-50%);
+  transition: width .3s, height .3s, border-color .3s;
+  opacity: .4;
+}
+.cursor.hovered { width: 6px; height: 6px; background: var(--accent); }
+.cursor-ring.hovered { width: 50px; height: 50px; border-color: var(--accent); opacity: .25; }
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 0 56px; height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(250,250,248,.92);
+  backdrop-filter: blur(16px);
+  border-bottom: var(--line);
+  transform: translateY(-100%);
+  animation: navSlide .5s .1s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes navSlide { to { transform: translateY(0); } }
+
+.nav-left { display: flex; align-items: center; gap: 20px; }
+.nav-back {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--gray-600); text-decoration: none;
+  display: flex; align-items: center; gap: 6px;
+  transition: color .2s; letter-spacing: .04em;
+}
+.nav-back:hover { color: var(--black); }
+.nav-back i { font-size: 13px; }
+.nav-divider { width: 1px; height: 16px; background: var(--gray-200); }
+.nav-title {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--gray-400); letter-spacing: .06em;
+}
+.nav-tag {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--accent); padding: 3px 10px;
+  border: var(--line-accent);
+  background: var(--accent-light);
+  letter-spacing: .06em;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  padding: 130px 56px 80px;
+  border-bottom: var(--line);
+  position: relative; overflow: hidden;
+  display: flex; align-items: flex-end;
+}
+
+.hero-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 85% 15%, rgba(45,106,79,.07) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 8% 85%, rgba(45,106,79,.04) 0%, transparent 55%);
+  animation: bgDrift 10s ease-in-out infinite alternate;
+}
+@keyframes bgDrift {
+  from { transform: scale(1) translate(0,0); }
+  to   { transform: scale(1.03) translate(8px,-5px); }
+}
+
+.hero-dots {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle, #d4d4ce 1px, transparent 1px);
+  background-size: 32px 32px; opacity: .35;
+  mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 30%, transparent 100%);
+}
+
+/* Accent vertical line */
+.hero-accent-line {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--accent); opacity: .6;
+}
+
+.hero-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 64px; width: 100%; max-width: 1200px; position: relative;
+}
+
+.hero-eyebrow {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--gray-400); letter-spacing: .14em; text-transform: uppercase;
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 14px;
+  opacity: 0; animation: fadeUp .7s .3s ease forwards;
+}
+.hero-eyebrow::before { content:''; display:block; width:28px; height:1px; background:var(--accent); }
+
+.hero-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 120px; line-height: 1; letter-spacing: -.04em;
+  color: var(--gray-200); position: absolute;
+  top: 80px; right: 56px; pointer-events: none;
+  opacity: 0; animation: fadeUp .7s .2s ease forwards;
+  user-select: none;
+}
+
+.hero-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(44px, 5.5vw, 72px);
+  line-height: 1.0; letter-spacing: -.025em;
+  color: var(--black); margin-bottom: 8px;
+  overflow: hidden;
+}
+.hero-title-line {
+  display: block; opacity: 0; transform: translateY(100%);
+  animation: lineReveal .8s cubic-bezier(.22,1,.36,1) forwards;
+}
+.hero-title-line:nth-child(1) { animation-delay: .45s; }
+.hero-title-line:nth-child(2) { animation-delay: .6s; }
+.hero-title-line:nth-child(3) { animation-delay: .72s; color: var(--accent); font-style: italic; }
+@keyframes lineReveal { to { opacity:1; transform:translateY(0); } }
+
+.hero-sub {
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  color: var(--accent); letter-spacing: .06em;
+  margin-bottom: 28px;
+  opacity: 0; animation: fadeUp .6s .85s ease forwards;
+  display: flex; align-items: center; gap: 8px;
+}
+.hero-sub i { font-size: 14px; }
+
+.hero-desc {
+  font-size: 15px; color: var(--gray-600); font-weight: 300;
+  line-height: 1.8; max-width: 460px;
+  opacity: 0; animation: fadeUp .6s .95s ease forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* Hero stats */
+.hero-right {
+  display: flex; flex-direction: column; justify-content: flex-end;
+  opacity: 0; animation: fadeUp .7s .8s ease forwards;
+}
+.hero-stats {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--gray-200); border: var(--line);
+}
+.stat-box {
+  background: var(--white); padding: 28px 24px;
+  position: relative; overflow: hidden; transition: background .2s;
+}
+.stat-box::before {
+  content: ''; position: absolute;
+  left: 0; top: 0; bottom: 0; width: 0;
+  background: var(--accent); transition: width .25s ease;
+}
+.stat-box:hover::before { width: 3px; }
+.stat-box:hover { background: var(--gray-100); }
+.stat-icon { font-size: 16px; color: var(--gray-300); margin-bottom: 10px; display: block; }
+.stat-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 34px; line-height: 1; color: var(--black); margin-bottom: 5px;
+}
+.stat-label { font-size: 11px; color: var(--gray-400); letter-spacing: .04em; }
+
+/* ── SECTIONS ── */
+section { padding: 88px 56px; border-bottom: var(--line); }
+.section-header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 52px; }
+.section-tag {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--accent); padding: 3px 10px;
+  border: var(--line-accent); background: var(--accent-light);
+  letter-spacing: .08em; text-transform: uppercase; align-self: center;
+}
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(26px, 2.8vw, 38px); letter-spacing: -.015em;
+}
+
+/* ── FADE IN ── */
+.fade-in { opacity:0; transform:translateY(24px); transition:opacity .65s ease,transform .65s ease; }
+.fade-in.visible { opacity:1; transform:translateY(0); }
+.fade-in-d1 { transition-delay:.1s; }
+.fade-in-d2 { transition-delay:.2s; }
+
+/* ── THE PROBLEM ── */
+.problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+.problem-statement {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(18px, 2vw, 24px); line-height: 1.5;
+  color: var(--black); padding-left: 20px;
+  border-left: 2px solid var(--accent);
+}
+.problem-points { display: flex; flex-direction: column; gap: 0; }
+.problem-point {
+  padding: 18px 0; border-bottom: var(--line);
+  display: flex; gap: 16px; align-items: flex-start;
+}
+.problem-point:first-child { border-top: var(--line); }
+.problem-point-icon {
+  width: 32px; height: 32px; border-radius: 6px;
+  background: var(--accent-light); border: var(--line-accent);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: var(--accent); font-size: 15px;
+}
+.problem-point-text { font-size: 14px; color: var(--gray-600); line-height: 1.7; font-weight: 300; }
+.problem-point-title { font-size: 14px; font-weight: 500; color: var(--black); margin-bottom: 4px; }
+
+/* ── ARCHITECTURE DIAGRAM ── */
+.arch-container {
+  background: var(--gray-100); border: var(--line);
+  padding: 48px; position: relative; overflow: hidden;
+}
+.arch-label {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--gray-400); letter-spacing: .1em; text-transform: uppercase;
+  position: absolute; top: 16px; left: 20px;
+}
+.arch-diagram { width: 100%; }
+
+/* ── CICD FLOW ── */
+.cicd-flow {
+  display: flex; align-items: stretch; gap: 0;
+  border: var(--line); overflow: hidden;
+}
+.cicd-step {
+  flex: 1; padding: 28px 24px;
+  border-right: var(--line);
+  position: relative; transition: background .2s;
+}
+.cicd-step:last-child { border-right: none; }
+.cicd-step:hover { background: var(--gray-100); }
+.cicd-step-num {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--gray-400); margin-bottom: 10px; letter-spacing: .08em;
+}
+.cicd-step-icon {
+  font-size: 22px; color: var(--accent); margin-bottom: 12px; display: block;
+}
+.cicd-step-title {
+  font-family: 'DM Serif Display', serif; font-size: 16px;
+  margin-bottom: 8px; line-height: 1.2;
+}
+.cicd-step-desc { font-size: 12px; color: var(--gray-600); line-height: 1.65; font-weight: 300; }
+.cicd-arrow {
+  position: absolute; right: -10px; top: 50%;
+  transform: translateY(-50%);
+  width: 20px; height: 20px; background: var(--white);
+  border: var(--line); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--accent); z-index: 2;
+  font-family: monospace;
+}
+.cicd-step:last-child .cicd-arrow { display: none; }
+
+/* ── NODE LABELING ── */
+.node-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0; border: var(--line);
+}
+.node-card {
+  padding: 28px 24px; border-right: var(--line); border-bottom: var(--line);
+  transition: background .2s;
+}
+.node-card:nth-child(3n) { border-right: none; }
+.node-card:nth-last-child(-n+3) { border-bottom: none; }
+.node-card:hover { background: var(--gray-100); }
+.node-card-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
+.node-badge {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  padding: 3px 8px; letter-spacing: .06em;
+}
+.badge-cp {
+  background: var(--accent-light); color: var(--accent);
+  border: var(--line-accent);
+}
+.badge-worker {
+  background: rgba(26,82,118,.08); color: #1a5276;
+  border: 1px solid rgba(26,82,118,.2);
+}
+.badge-all {
+  background: rgba(108,52,131,.08); color: #6c3483;
+  border: 1px solid rgba(108,52,131,.2);
+}
+.node-card-title { font-family: 'DM Serif Display', serif; font-size: 17px; margin-bottom: 8px; }
+.node-card-desc { font-size: 13px; color: var(--gray-600); line-height: 1.7; font-weight: 300; }
+.node-labels {
+  display: flex; flex-wrap: wrap; gap: 5px; margin-top: 14px;
+}
+.node-label {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  padding: 2px 8px; background: var(--gray-200); color: var(--gray-600);
+}
+
+/* ── RESULTS ── */
+.results-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0; border: var(--line); }
+.result-box {
+  padding: 36px 28px; border-right: var(--line);
+  transition: background .2s; position: relative; overflow: hidden;
+}
+.result-box:last-child { border-right: none; }
+.result-box:hover { background: var(--gray-100); }
+.result-box::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 0; background: var(--accent); transition: width .25s;
+}
+.result-box:hover::before { width: 3px; }
+.result-icon { font-size: 22px; color: var(--accent); margin-bottom: 14px; display: block; }
+.result-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 36px; line-height: 1; color: var(--black); margin-bottom: 6px;
+}
+.result-label { font-size: 12px; color: var(--gray-400); letter-spacing: .04em; }
+.result-sub { font-size: 12px; color: var(--gray-600); margin-top: 6px; font-weight: 300; line-height: 1.5; }
+
+/* ── TECH STACK ── */
+.stack-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; border: var(--line); }
+.stack-item {
+  padding: 28px 24px; border-right: var(--line); border-bottom: var(--line);
+  transition: background .2s;
+}
+.stack-item:nth-child(3n) { border-right: none; }
+.stack-item:nth-last-child(-n+3) { border-bottom: none; }
+.stack-item:hover { background: var(--gray-100); }
+.stack-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.stack-item-icon { font-size: 20px; color: var(--accent); }
+.stack-item-name { font-family: 'DM Serif Display', serif; font-size: 17px; }
+.stack-item-why { font-size: 13px; color: var(--gray-600); line-height: 1.7; font-weight: 300; }
+.stack-item-tag {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--accent); margin-top: 10px; display: block; letter-spacing: .06em;
+}
+
+/* ── LESSONS LEARNED ── */
+.lessons-list { display: flex; flex-direction: column; gap: 0; }
+.lesson-item {
+  padding: 28px 0; border-bottom: var(--line);
+  display: grid; grid-template-columns: 48px 1fr;
+  gap: 24px; align-items: start;
+}
+.lesson-item:first-child { border-top: var(--line); }
+.lesson-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 32px; color: var(--gray-200); line-height: 1;
+}
+.lesson-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+.lesson-body { font-size: 14px; color: var(--gray-600); line-height: 1.75; font-weight: 300; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  padding: 56px 56px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 26px; font-size: 13px; font-weight: 400;
+  text-decoration: none; letter-spacing: .02em;
+  transition: all .2s; cursor: none; border: none;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn i { font-size: 15px; }
+.btn-primary { background: var(--black); color: var(--white); }
+.btn-primary:hover { background: #333; transform: scale(1.02); }
+.btn-outline { background: transparent; color: var(--black); border: var(--line); }
+.btn-outline:hover { background: var(--gray-100); }
+.next-case {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  text-decoration: none; color: var(--black);
+  transition: opacity .2s;
+}
+.next-case:hover { opacity: .7; }
+.next-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gray-400); letter-spacing: .08em; }
+.next-title { font-family: 'DM Serif Display', serif; font-size: 20px; }
+
+/* ── FOOTER ── */
+footer {
+  padding: 28px 56px; border-top: var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.footer-copy { font-family:'DM Mono',monospace; font-size:11px; color:var(--gray-400); }
+.footer-links { display:flex; gap:24px; }
+.footer-link {
+  font-family:'DM Mono',monospace; font-size:11px; color:var(--gray-400);
+  text-decoration:none; transition:color .2s; display:flex; align-items:center; gap:5px;
+}
+.footer-link:hover { color:var(--black); }
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  nav,.bottom-nav,footer { padding-left:28px; padding-right:28px; }
+  .hero { padding:110px 28px 60px; }
+  .hero-num { display:none; }
+  section { padding:64px 28px; }
+  .hero-grid,.problem-grid { grid-template-columns:1fr; gap:40px; }
+  .cicd-flow { flex-direction:column; }
+  .cicd-step { border-right:none; border-bottom:var(--line); }
+  .cicd-step:last-child { border-bottom:none; }
+  .cicd-arrow { display:none !important; }
+  .node-grid,.stack-grid { grid-template-columns:1fr 1fr; }
+  .results-grid { grid-template-columns:1fr 1fr; }
+  .result-box:nth-child(2) { border-right:none; }
+  .result-box:nth-child(3) { border-top:var(--line); }
+  .bottom-nav { flex-direction:column; gap:32px; align-items:flex-start; }
+}
+@media(max-width:600px){
+  .node-grid,.stack-grid,.results-grid { grid-template-columns:1fr; }
+  .node-card,result-box,.stack-item { border-right:none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <a href="/" class="nav-back"><i class="ti ti-arrow-left"></i>Portfolio</a>
+    <div class="nav-divider"></div>
+    <span class="nav-title">Case Study</span>
+  </div>
+  <div class="nav-tag">001 · Infrastructure Platform</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-dots"></div>
+  <div class="hero-accent-line"></div>
+  <div class="hero-num">001</div>
+
+  <div class="hero-grid">
+    <div>
+      <p class="hero-eyebrow">Infrastructure Platform · Kubernetes</p>
+      <h1 class="hero-title">
+        <span class="hero-title-line">Production</span>
+        <span class="hero-title-line">Kubernetes</span>
+        <span class="hero-title-line">Infrastructure</span>
+      </h1>
+      <p class="hero-sub"><i class="ti ti-server"></i>Multi-environment cluster · High availability · Government-grade</p>
+      <p class="hero-desc">
+        Designing and operating a production Kubernetes cluster for a government-grade platform 
+        requires more than just getting pods running. This case study documents the architecture 
+        decisions, node strategy, CI/CD pipeline, and operational approach that kept the system 
+        at 99.9% uptime with zero major incidents.
+      </p>
+    </div>
+    <div class="hero-right">
+      <div class="hero-stats">
+        <div class="stat-box">
+          <i class="ti ti-server stat-icon"></i>
+          <div class="stat-num">3</div>
+          <div class="stat-label">Control Plane Nodes</div>
+        </div>
+        <div class="stat-box">
+          <i class="ti ti-activity stat-icon"></i>
+          <div class="stat-num">99.9%</div>
+          <div class="stat-label">Uptime</div>
+        </div>
+        <div class="stat-box">
+          <i class="ti ti-cpu stat-icon"></i>
+          <div class="stat-num">5+</div>
+          <div class="stat-label">Worker Nodes</div>
+        </div>
+        <div class="stat-box">
+          <i class="ti ti-bolt stat-icon"></i>
+          <div class="stat-num">0</div>
+          <div class="stat-label">Major Incidents</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THE PROBLEM -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">01</div>
+    <h2 class="section-title">The Problem</h2>
+  </div>
+  <div class="problem-grid fade-in">
+    <div>
+      <p class="problem-statement">
+        "A government-grade platform needs infrastructure that doesn't just work — 
+        it needs to keep working even when nodes fail, traffic spikes, 
+        and deployments go wrong."
+      </p>
+      <p style="margin-top:24px;font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8;">
+        The platform required persistent, high-availability infrastructure capable of surviving 
+        hardware failures without service interruption. A single control plane would be a 
+        single point of failure — unacceptable for production. Worker nodes needed intelligent 
+        workload placement to prevent resource contention between services.
+      </p>
+    </div>
+    <div class="problem-points">
+      <div class="problem-point">
+        <div class="problem-point-icon"><i class="ti ti-alert-triangle"></i></div>
+        <div>
+          <div class="problem-point-title">Single Point of Failure Risk</div>
+          <div class="problem-point-text">A single control plane means the entire cluster becomes unmanageable if that node goes down — unacceptable for production workloads.</div>
+        </div>
+      </div>
+      <div class="problem-point">
+        <div class="problem-point-icon"><i class="ti ti-topology-star"></i></div>
+        <div>
+          <div class="problem-point-title">Workload Isolation</div>
+          <div class="problem-point-text">Without node labeling, database pods could land on the same node as application services — causing resource contention and cascading failures.</div>
+        </div>
+      </div>
+      <div class="problem-point">
+        <div class="problem-point-icon"><i class="ti ti-trending-up"></i></div>
+        <div>
+          <div class="problem-point-title">Unpredictable Traffic Spikes</div>
+          <div class="problem-point-text">Government platforms see sudden load surges. Static replica counts either waste resources or leave the system under-provisioned during peaks.</div>
+        </div>
+      </div>
+      <div class="problem-point">
+        <div class="problem-point-icon"><i class="ti ti-git-branch"></i></div>
+        <div>
+          <div class="problem-point-title">Deployment Safety</div>
+          <div class="problem-point-text">Manual deployments to production are error-prone. A reliable CI/CD pipeline with environment gates was needed to prevent bad code from reaching production.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">02</div>
+    <h2 class="section-title">Architecture</h2>
+  </div>
+
+  <div class="arch-container fade-in">
+    <div class="arch-label">Cluster Architecture · High Availability Design</div>
+    <svg class="arch-diagram" viewBox="0 0 900 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+      <!-- Background zones -->
+      <rect x="20" y="40" width="260" height="340" rx="6" fill="rgba(45,106,79,0.04)" stroke="rgba(45,106,79,0.2)" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="150" y="30" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#9a9a94" letter-spacing="2">CONTROL PLANE</text>
+
+      <rect x="310" y="40" width="570" height="340" rx="6" fill="rgba(26,82,118,0.03)" stroke="rgba(26,82,118,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="595" y="30" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#9a9a94" letter-spacing="2">WORKER NODES</text>
+
+      <!-- Control Plane Nodes -->
+      <!-- CP1 -->
+      <rect x="40" y="60" width="80" height="80" rx="6" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1.5"/>
+      <text x="80" y="95" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f" font-weight="500">MASTER</text>
+      <text x="80" y="110" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">NODE 1</text>
+      <circle cx="80" cy="125" r="3" fill="#2d6a4f" opacity="0.6"/>
+
+      <!-- CP2 -->
+      <rect x="130" y="60" width="80" height="80" rx="6" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1.5"/>
+      <text x="170" y="95" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f" font-weight="500">MASTER</text>
+      <text x="170" y="110" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">NODE 2</text>
+      <circle cx="170" cy="125" r="3" fill="#2d6a4f" opacity="0.6"/>
+
+      <!-- CP3 -->
+      <rect x="40" y="160" width="80" height="80" rx="6" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1.5"/>
+      <text x="80" y="195" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f" font-weight="500">MASTER</text>
+      <text x="80" y="210" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">NODE 3</text>
+      <circle cx="80" cy="225" r="3" fill="#2d6a4f" opacity="0.6"/>
+
+      <!-- etcd label -->
+      <rect x="40" y="270" width="170" height="30" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
+      <text x="125" y="290" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#2d6a4f">etcd cluster (quorum: 2/3)</text>
+
+      <!-- Flannel CNI -->
+      <rect x="40" y="315" width="170" height="28" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
+      <text x="125" y="333" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#2d6a4f">Flannel CNI</text>
+
+      <!-- Lines CP to CP -->
+      <line x1="120" y1="100" x2="130" y2="100" stroke="rgba(45,106,79,0.4)" stroke-width="1" stroke-dasharray="3 2"/>
+      <line x1="80" y1="140" x2="80" y2="160" stroke="rgba(45,106,79,0.4)" stroke-width="1" stroke-dasharray="3 2"/>
+      <line x1="170" y1="140" x2="120" y2="160" stroke="rgba(45,106,79,0.4)" stroke-width="1" stroke-dasharray="3 2"/>
+
+      <!-- Worker nodes -->
+      <!-- Node 1+2 - Database -->
+      <rect x="330" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
+      <text x="375" y="90" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 1</text>
+      <text x="375" y="104" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">database</text>
+      <text x="375" y="118" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">+ services</text>
+
+      <rect x="430" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
+      <text x="475" y="90" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 2</text>
+      <text x="475" y="104" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">database</text>
+      <text x="475" y="118" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">+ services</text>
+
+      <!-- Node 3+4 - Services -->
+      <rect x="530" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
+      <text x="575" y="90" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 3</text>
+      <text x="575" y="104" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">services</text>
+      <text x="575" y="118" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">only</text>
+
+      <rect x="630" y="60" width="90" height="70" rx="5" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1.5"/>
+      <text x="675" y="90" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276" font-weight="500">NODE 4</text>
+      <text x="675" y="104" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#1a5276">services</text>
+      <text x="675" y="118" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">only</text>
+
+      <!-- Node 5 - All labels -->
+      <rect x="730" y="60" width="120" height="70" rx="5" fill="rgba(108,52,131,0.08)" stroke="rgba(108,52,131,0.3)" stroke-width="1.5"/>
+      <text x="790" y="88" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#6c3483" font-weight="500">NODE 5</text>
+      <text x="790" y="102" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#6c3483">all-labels</text>
+      <text x="790" y="116" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#9a9a94">overflow / fallback</text>
+
+      <!-- HPA boxes under workers -->
+      <rect x="330" y="155" width="190" height="28" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
+      <text x="425" y="173" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">HPA · auto-scale on CPU/mem</text>
+
+      <rect x="530" y="155" width="320" height="28" rx="4" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
+      <text x="690" y="173" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#2d6a4f">HPA · auto-scale + Node 5 fallback</text>
+
+      <!-- NodeSelector labels -->
+      <rect x="330" y="200" width="520" height="24" rx="4" fill="rgba(26,82,118,0.05)" stroke="rgba(26,82,118,0.15)" stroke-width="1"/>
+      <text x="590" y="216" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#1a5276">nodeSelector · workload=database | workload=service | workload=all</text>
+
+      <!-- Connection from CP to workers -->
+      <line x1="280" y1="100" x2="330" y2="100" stroke="rgba(45,106,79,0.5)" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <defs>
+        <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(45,106,79,0.5)"/>
+        </marker>
+      </defs>
+
+      <!-- Persistent storage note -->
+      <rect x="330" y="250" width="520" height="50" rx="4" fill="rgba(45,106,79,0.04)" stroke="rgba(45,106,79,0.15)" stroke-width="1"/>
+      <text x="345" y="272" font-family="'DM Mono',monospace" font-size="9" fill="#5a5a54">Persistent Volume Claims (PVC)</text>
+      <text x="345" y="288" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Stateful workloads bound to specific nodes via nodeAffinity</text>
+
+      <!-- Legend -->
+      <rect x="330" y="320" width="12" height="12" rx="2" fill="rgba(45,106,79,0.1)" stroke="rgba(45,106,79,0.4)" stroke-width="1"/>
+      <text x="350" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Control Plane</text>
+      <rect x="450" y="320" width="12" height="12" rx="2" fill="rgba(26,82,118,0.08)" stroke="rgba(26,82,118,0.3)" stroke-width="1"/>
+      <text x="470" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Worker Node</text>
+      <rect x="570" y="320" width="12" height="12" rx="2" fill="rgba(108,52,131,0.08)" stroke="rgba(108,52,131,0.3)" stroke-width="1"/>
+      <text x="590" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">Fallback Node</text>
+      <rect x="690" y="320" width="12" height="12" rx="2" fill="rgba(45,106,79,0.06)" stroke="rgba(45,106,79,0.2)" stroke-width="1"/>
+      <text x="710" y="331" font-family="'DM Mono',monospace" font-size="9" fill="#9a9a94">HPA / Policies</text>
+    </svg>
+  </div>
+
+  <div style="margin-top:32px;display:grid;grid-template-columns:1fr 1fr;gap:0;border:var(--line)" class="fade-in fade-in-d1">
+    <div style="padding:28px 28px;border-right:var(--line)">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px">Control Plane Design</div>
+      <p style="font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8">
+        Three control plane nodes is the minimum for etcd quorum. With 3 nodes, the cluster tolerates 
+        the failure of any 1 node while remaining fully operational. etcd requires a majority (2 of 3) 
+        to elect a new leader — if 2 nodes go down simultaneously, the cluster enters a read-only 
+        state but doesn't lose data. This is the standard for production Kubernetes.
+      </p>
+    </div>
+    <div style="padding:28px 28px">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px">CNI Choice: Flannel</div>
+      <p style="font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8">
+        Flannel was chosen over Calico after testing both in this environment. Calico's additional 
+        network policy features added operational complexity without clear benefit for this use case. 
+        Flannel provides a simple, reliable overlay network that just works — aligning with the 
+        principle of choosing the simplest tool that solves the problem.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- CICD PIPELINE -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">03</div>
+    <h2 class="section-title">CI/CD Pipeline</h2>
+  </div>
+  <p class="fade-in" style="font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8;max-width:680px;margin-bottom:40px">
+    The pipeline separates concerns clearly — development and staging auto-deploy on every push, 
+    while production requires a manual trigger. This prevents accidental production deployments 
+    while keeping lower environments continuously up to date.
+  </p>
+  <div class="cicd-flow fade-in fade-in-d1">
+    <div class="cicd-step">
+      <div class="cicd-step-num">01</div>
+      <i class="ti ti-player-play cicd-step-icon"></i>
+      <div class="cicd-step-title">Trigger</div>
+      <div class="cicd-step-desc">Jenkins job triggered manually (prod) or automatically on push (dev/staging). Environment gates enforced at this stage.</div>
+      <div class="cicd-arrow">→</div>
+    </div>
+    <div class="cicd-step">
+      <div class="cicd-step-num">02</div>
+      <i class="ti ti-brand-git cicd-step-icon"></i>
+      <div class="cicd-step-title">Fetch Code</div>
+      <div class="cicd-step-desc">Jenkins pulls source code from GitLab repository. Branch strategy enforces dev → staging → production promotion flow.</div>
+      <div class="cicd-arrow">→</div>
+    </div>
+    <div class="cicd-step">
+      <div class="cicd-step-num">03</div>
+      <i class="ti ti-tag cicd-step-icon"></i>
+      <div class="cicd-step-title">Tag Version</div>
+      <div class="cicd-step-desc">Semantic version tag applied to the build. Ensures every image is traceable back to the exact commit that produced it.</div>
+      <div class="cicd-arrow">→</div>
+    </div>
+    <div class="cicd-step">
+      <div class="cicd-step-num">04</div>
+      <i class="ti ti-packages cicd-step-icon"></i>
+      <div class="cicd-step-title">Build Image</div>
+      <div class="cicd-step-desc">Docker image built and tagged. Image scanning planned as next step — a security layer before images are pushed to registry.</div>
+      <div class="cicd-arrow">→</div>
+    </div>
+    <div class="cicd-step">
+      <div class="cicd-step-num">05</div>
+      <i class="ti ti-ship cicd-step-icon"></i>
+      <div class="cicd-step-title">Push to Harbor</div>
+      <div class="cicd-step-desc">Verified image pushed to Harbor container registry. Harbor provides image scanning, vulnerability reports, and access control.</div>
+      <div class="cicd-arrow">→</div>
+    </div>
+    <div class="cicd-step">
+      <div class="cicd-step-num">06</div>
+      <i class="ti ti-refresh cicd-step-icon"></i>
+      <div class="cicd-step-title">Update Manifest</div>
+      <div class="cicd-step-desc">Jenkins updates the image version in the DevOps GitLab manifest repo. Keeps infrastructure-as-code separate from application code.</div>
+      <div class="cicd-arrow">→</div>
+    </div>
+    <div class="cicd-step">
+      <div class="cicd-step-num">07</div>
+      <i class="ti ti-git-fork cicd-step-icon"></i>
+      <div class="cicd-step-title">ArgoCD Sync</div>
+      <div class="cicd-step-desc">ArgoCD detects manifest change in GitLab and syncs the new version to Kubernetes. GitOps principle — cluster state is always driven by Git.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;padding:20px 24px;background:var(--accent-light);border:var(--line-accent);display:flex;gap:12px;align-items:flex-start" class="fade-in fade-in-d2">
+    <i class="ti ti-info-circle" style="color:var(--accent);font-size:16px;flex-shrink:0;margin-top:2px"></i>
+    <p style="font-size:13px;color:var(--gray-600);font-weight:300;line-height:1.7">
+      <strong style="color:var(--black);font-weight:500">Production gate:</strong> Development and staging pipelines run automatically on every push. 
+      The production pipeline requires explicit manual triggering in Jenkins — preventing accidental deployments 
+      and giving the team full control over when production updates are applied.
+    </p>
+  </div>
+</section>
+
+<!-- NODE LABELING STRATEGY -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">04</div>
+    <h2 class="section-title">Node Labeling Strategy</h2>
+  </div>
+  <p class="fade-in" style="font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8;max-width:680px;margin-bottom:40px">
+    One of the most important operational decisions was how to organize workloads across worker nodes. 
+    Rather than letting the scheduler place pods anywhere, each node was labeled by workload type 
+    and workloads were pinned using <code style="font-family:'DM Mono',monospace;font-size:12px;background:var(--gray-200);padding:1px 5px">nodeSelector</code>. 
+    This creates predictable, isolated environments that prevent resource contention.
+  </p>
+  <div class="node-grid fade-in fade-in-d1">
+    <div class="node-card">
+      <div class="node-card-header">
+        <span class="node-badge badge-cp">Control Plane</span>
+      </div>
+      <div class="node-card-title">Master Nodes 1–3</div>
+      <div class="node-card-desc">Dedicated to Kubernetes control plane components only. etcd, API server, scheduler, and controller manager. No application workloads scheduled here.</div>
+      <div class="node-labels">
+        <span class="node-label">node-role: master</span>
+        <span class="node-label">etcd: true</span>
+      </div>
+    </div>
+    <div class="node-card">
+      <div class="node-card-header">
+        <span class="node-badge badge-worker">Worker · DB</span>
+      </div>
+      <div class="node-card-title">Nodes 1 & 2</div>
+      <div class="node-card-desc">Database workloads pinned here for predictable I/O and memory. Having two nodes means DB replicas land on different hardware for HA.</div>
+      <div class="node-labels">
+        <span class="node-label">workload: database</span>
+        <span class="node-label">workload: services</span>
+      </div>
+    </div>
+    <div class="node-card">
+      <div class="node-card-header">
+        <span class="node-badge badge-worker">Worker · Services</span>
+      </div>
+      <div class="node-card-title">Nodes 3 & 4</div>
+      <div class="node-card-desc">Application services and APIs. Isolated from database nodes to prevent heavy DB queries from starving service pods of CPU and memory.</div>
+      <div class="node-labels">
+        <span class="node-label">workload: services</span>
+      </div>
+    </div>
+    <div class="node-card">
+      <div class="node-card-header">
+        <span class="node-badge badge-all">Worker · All Labels</span>
+      </div>
+      <div class="node-card-title">Node 5 — Fallback</div>
+      <div class="node-card-desc">Carries all workload labels. Acts as overflow when nodes 1–4 are resource-constrained. HPA can expand onto this node before triggering cluster autoscaler.</div>
+      <div class="node-labels">
+        <span class="node-label">workload: database</span>
+        <span class="node-label">workload: services</span>
+        <span class="node-label">workload: all</span>
+      </div>
+    </div>
+    <div class="node-card" style="grid-column:span 2">
+      <div class="node-card-header">
+        <span class="node-badge badge-cp">HPA</span>
+      </div>
+      <div class="node-card-title">Horizontal Pod Autoscaler</div>
+      <div class="node-card-desc">
+        Every deployment is backed by HPA. When CPU or memory thresholds are exceeded, 
+        Kubernetes automatically scales replica counts. The fallback node (Node 5) provides 
+        immediate capacity before any node provisioning is needed. 
+        This is why there were zero major incidents — traffic spikes are absorbed automatically 
+        without manual intervention.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">05</div>
+    <h2 class="section-title">Results & Impact</h2>
+  </div>
+  <div class="results-grid fade-in">
+    <div class="result-box">
+      <i class="ti ti-activity result-icon"></i>
+      <div class="result-num">99.9%</div>
+      <div class="result-label">Uptime</div>
+      <div class="result-sub">Sustained across production environment with no major service interruptions.</div>
+    </div>
+    <div class="result-box">
+      <i class="ti ti-shield-check result-icon"></i>
+      <div class="result-num">0</div>
+      <div class="result-label">Major Incidents</div>
+      <div class="result-sub">HPA absorbed all traffic spikes before they became incidents. No manual intervention required during peaks.</div>
+    </div>
+    <div class="result-box">
+      <i class="ti ti-git-branch result-icon"></i>
+      <div class="result-num">3</div>
+      <div class="result-label">Environments</div>
+      <div class="result-sub">Dev, staging, production — each isolated with separate promotion gates and deployment policies.</div>
+    </div>
+    <div class="result-box">
+      <i class="ti ti-topology-star result-icon"></i>
+      <div class="result-num">2/3</div>
+      <div class="result-label">etcd Fault Tolerance</div>
+      <div class="result-sub">Cluster remains fully operational even with 1 of 3 control plane nodes offline.</div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">06</div>
+    <h2 class="section-title">Tech Stack & Decisions</h2>
+  </div>
+  <div class="stack-grid fade-in">
+    <div class="stack-item">
+      <div class="stack-item-header">
+        <i class="ti ti-hexagons stack-item-icon"></i>
+        <div class="stack-item-name">Kubernetes RKE2</div>
+      </div>
+      <div class="stack-item-why">RKE2 was chosen for its hardened security defaults and simpler operational model compared to vanilla K8s. It ships with a curated set of components that work well together out of the box.</div>
+      <span class="stack-item-tag">// Orchestration</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-item-header">
+        <i class="ti ti-adjustments stack-item-icon"></i>
+        <div class="stack-item-name">Rancher</div>
+      </div>
+      <div class="stack-item-why">Rancher provides a unified management UI for multiple clusters. It simplifies RBAC, workload management, and monitoring across environments without requiring deep kubectl expertise from every team member.</div>
+      <span class="stack-item-tag">// Cluster Management</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-item-header">
+        <i class="ti ti-network stack-item-icon"></i>
+        <div class="stack-item-name">Flannel CNI</div>
+      </div>
+      <div class="stack-item-why">Tested Calico first — its NetworkPolicy features added operational overhead without benefit for this use case. Flannel provides reliable VXLAN overlay networking with minimal configuration. Simpler is more reliable in production.</div>
+      <span class="stack-item-tag">// Container Networking</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-item-header">
+        <i class="ti ti-brand-git stack-item-icon"></i>
+        <div class="stack-item-name">Jenkins + ArgoCD</div>
+      </div>
+      <div class="stack-item-why">Jenkins handles the build pipeline (flexible, battle-tested). ArgoCD handles GitOps-style deployment — cluster state is always driven by Git. Separating build from deploy makes each step auditable and independently rollback-able.</div>
+      <span class="stack-item-tag">// CI/CD</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-item-header">
+        <i class="ti ti-ship stack-item-icon"></i>
+        <div class="stack-item-name">Harbor Registry</div>
+      </div>
+      <div class="stack-item-why">Private container registry with built-in vulnerability scanning. Keeps all images internal — no dependency on external registries in production. Provides access control, image signing, and audit trails.</div>
+      <span class="stack-item-tag">// Container Registry</span>
+    </div>
+    <div class="stack-item">
+      <div class="stack-item-header">
+        <i class="ti ti-trending-up stack-item-icon"></i>
+        <div class="stack-item-name">HPA</div>
+      </div>
+      <div class="stack-item-why">Horizontal Pod Autoscaler scales replica counts based on CPU and memory metrics. The key decision was pairing HPA with a fallback node (Node 5) that has all labels — ensuring scale-out can happen immediately without waiting for new nodes.</div>
+      <span class="stack-item-tag">// Auto-scaling</span>
+    </div>
+  </div>
+</section>
+
+<!-- LESSONS LEARNED -->
+<section>
+  <div class="section-header fade-in">
+    <div class="section-tag">07</div>
+    <h2 class="section-title">Lessons Learned</h2>
+  </div>
+  <div class="lessons-list fade-in">
+    <div class="lesson-item">
+      <div class="lesson-num">01</div>
+      <div>
+        <div class="lesson-title">Test CNI choices early — switching in production is painful</div>
+        <div class="lesson-body">Starting with Calico and switching to Flannel required re-networking the cluster. Testing CNI options in a staging environment first would have saved significant time. For most production clusters without complex NetworkPolicy requirements, Flannel's simplicity is a feature, not a limitation.</div>
+      </div>
+    </div>
+    <div class="lesson-item">
+      <div class="lesson-num">02</div>
+      <div>
+        <div class="lesson-title">Node labeling strategy should be decided before first deployment</div>
+        <div class="lesson-body">Retrofitting node labels and nodeSelectors onto running workloads requires planned downtime. Designing the labeling strategy upfront — and documenting which workloads go where — prevents the "let the scheduler decide" approach that leads to resource contention.</div>
+      </div>
+    </div>
+    <div class="lesson-item">
+      <div class="lesson-num">03</div>
+      <div>
+        <div class="lesson-title">A fallback node is cheaper than an incident</div>
+        <div class="lesson-body">Keeping Node 5 with all labels as an overflow buffer felt wasteful at first. In practice, it absorbed every traffic spike and prevented HPA from being unable to scale due to insufficient cluster capacity. The cost of the node is trivial compared to the cost of an outage.</div>
+      </div>
+    </div>
+    <div class="lesson-item">
+      <div class="lesson-num">04</div>
+      <div>
+        <div class="lesson-title">Separate the build pipeline from the deploy pipeline</div>
+        <div class="lesson-body">Combining build and deploy in a single pipeline makes rollbacks complicated. The Jenkins (build) → GitLab manifest → ArgoCD (deploy) split means you can roll back a deployment by reverting a Git commit — no need to re-run the build pipeline or understand its internals.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav fade-in">
+  <a href="/" class="btn btn-outline"><i class="ti ti-arrow-left"></i>Back to Portfolio</a>
+  <a href="/case-huawei" class="next-case">
+    <span class="next-label">Next Case Study →</span>
+    <span class="next-title">Huawei Cloud Migration</span>
+  </a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-copy">© 2026 Noval Ramdani</span>
+  <div class="footer-links">
+    <a href="/" class="footer-link"><i class="ti ti-user"></i>Portfolio</a>
+    <a href="https://linkedin.com/in/noval-ramdani" target="_blank" class="footer-link"><i class="ti ti-brand-linkedin"></i>LinkedIn</a>
+    <a href="mailto:novalramdani.work@gmail.com" class="footer-link"><i class="ti ti-mail"></i>Email</a>
+  </div>
+</footer>
+
+<script>
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+function animateCursor(){
+  cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+  rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+document.querySelectorAll('a,button,.stat-box,.result-box,.stack-item,.node-card,.cicd-step').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cursor.classList.add('hovered');ring.classList.add('hovered');});
+  el.addEventListener('mouseleave',()=>{cursor.classList.remove('hovered');ring.classList.remove('hovered');});
+});
+
+const observer = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:.08});
+document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>
