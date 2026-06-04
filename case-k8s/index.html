@@ -255,12 +255,12 @@ section { padding: 88px 56px; border-bottom: var(--line); }
 
 /* ── ARCHITECTURE DIAGRAM ── */
 .arch-container {
-  background: var(--gray-100); border: var(--line);
+  background: #060d1a; border: var(--line);
   padding: 48px; position: relative; overflow: hidden;
 }
 .arch-label {
   font-family: 'DM Mono', monospace; font-size: 10px;
-  color: var(--gray-400); letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(255,255,255,.3); letter-spacing: .1em; text-transform: uppercase;
   position: absolute; top: 16px; left: 20px;
 }
 .arch-diagram { width: 100%; }
@@ -582,7 +582,7 @@ footer {
     <h2 class="section-title">Architecture</h2>
   </div>
 
-  <div class="arch-container fade-in" id="archContainer">
+  <div class="arch-container fade-in" id="archContainer" style="background:#060d1a;border:var(--line);padding:40px 32px 32px;position:relative;">
     <div class="arch-label">Cluster Architecture · High Availability Design</div>
 
     <!-- Replay button -->

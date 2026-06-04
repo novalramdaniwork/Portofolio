@@ -825,9 +825,10 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
           <span class="stack-tag">Kubernetes RKE2</span><span class="stack-tag">Docker</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Prometheus</span><span class="stack-tag">Grafana</span>
         </div>
         <div class="project-cta">
-          <a href="/case-k8s" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
+          <a href="https://case-huawei.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
         </div>
       </div>
+      <div class="project-arrow">↗</div>
     </div>
 
   </div>
@@ -849,59 +850,39 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
           <span class="stack-tag">Huawei Cloud</span><span class="stack-tag">Kubernetes CCE</span><span class="stack-tag">Jenkins</span><span class="stack-tag">Keycloak</span><span class="stack-tag">Temporal</span>
         </div>
         <div class="project-cta">
-          <a href="/case-huawei" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
+          <a href="https://case-k8s.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
         </div>
       </div>
+      <div class="project-arrow">↗</div>
     </div>
 
     <div class="project-item">
       <div>
         <div class="project-meta">
           <span class="project-num">003</span>
-          <span class="project-type"><i class="ti ti-database"></i>Handover Project</span>
+          <span class="project-type"><i class="ti ti-server"></i>Infrastructure Operations</span>
         </div>
         <div class="project-name">Inherited Infrastructure — Full Ownership</div>
-        <div class="project-desc">Multi-master synchronous replication cluster. HAProxy load balancing for DB connections, automated backup scripts with SSH key auth to remote VPS, and granular user privilege management across multiple production databases.</div>
+        <div class="project-desc">Took full operational ownership of a multi-cluster Kubernetes infrastructure as sole DevOps. Three RKE2 clusters managed via Rancher, KrakenD API Gateway per cluster, and a stack of standalone database services — all inherited, all operated solo.</div>
         <div class="project-highlights">
-          <div class="project-hl">Synchronous multi-master replication — no write lag across nodes</div>
-          <div class="project-hl">Automated offsite backup with SSH key authentication</div>
-          <div class="project-hl">Granular read-only and read-write privilege control per database</div>
+          <div class="project-hl">3 × RKE2 clusters (dev/staging/prod) via Rancher — full solo ownership</div>
+          <div class="project-hl">KrakenD API Gateway per cluster — all traffic routed through gateway</div>
+          <div class="project-hl">NPM + ModSecurity + CrowdSec security stack at entry point</div>
         </div>
         <div class="project-stack">
-          <span class="stack-tag">MariaDB</span><span class="stack-tag">Galera</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Bash</span><span class="stack-tag">Linux</span>
+          <span class="stack-tag">Kubernetes RKE2</span><span class="stack-tag">Rancher</span><span class="stack-tag">KrakenD</span><span class="stack-tag">Nginx Proxy Manager</span><span class="stack-tag">CrowdSec</span>
         </div>
         <div class="project-cta">
           <a href="/case-ops" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
         </div>
       </div>
+      <div class="project-arrow">↗</div>
     </div>
 
     <div class="project-item">
       <div>
         <div class="project-meta">
           <span class="project-num">004</span>
-          <span class="project-type"><i class="ti ti-database"></i>High Availability</span>
-        </div>
-        <div class="project-name">MariaDB Galera Cluster + HAProxy</div>
-        <div class="project-desc">Multi-master synchronous replication cluster. HAProxy load balancing for DB connections, automated backup scripts with SSH key auth to remote VPS, and granular user privilege management across multiple production databases.</div>
-        <div class="project-highlights">
-          <div class="project-hl">Synchronous multi-master replication — no write lag across nodes</div>
-          <div class="project-hl">Automated offsite backup with SSH key authentication</div>
-          <div class="project-hl">Granular read-only and read-write privilege control per database</div>
-        </div>
-        <div class="project-stack">
-          <span class="stack-tag">MariaDB</span><span class="stack-tag">Galera</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Bash</span><span class="stack-tag">Linux</span>
-        </div>
-        <div class="project-cta">
-          <a href="/case-galera" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="project-item">
-      <div>
-        <div class="project-meta">
-          <span class="project-num">005</span>
           <span class="project-type"><i class="ti ti-bell"></i>Monitoring & Alerting</span>
         </div>
         <div class="project-name">Automated Server Monitoring + Telegram Alerting</div>
@@ -914,10 +895,31 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
         <div class="project-stack">
           <span class="stack-tag">n8n</span><span class="stack-tag">Alertmanager</span><span class="stack-tag">Prometheus</span><span class="stack-tag">Telegram Bot API</span>
         </div>
-        <div class="project-cta"><a href="/case-monitoring" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a></div>
+        <div class="project-cta"><a href="https://case-monitoring.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a></div>
       </div>
+      <div class="project-arrow">↗</div>
     </div>
 
+    <div class="project-item">
+      <div>
+        <div class="project-meta">
+          <span class="project-num">005</span>
+          <span class="project-type"><i class="ti ti-lock"></i>Infrastructure Automation</span>
+        </div>
+        <div class="project-name">Automated SSL Lifecycle Management</div>
+        <div class="project-desc">Automated wildcard certificate issuance, renewal, validation and deployment across multiple production services behind HAProxy. Zero-downtime reload via USR2 signal, multi-domain support, expiry alerting.</div>
+        <div class="project-highlights">
+          <div class="project-hl">Zero-downtime cert renewal via HAProxy USR2 signal reload</div>
+          <div class="project-hl">Wildcard *.domain.id coverage across all subdomains</div>
+          <div class="project-hl">DNS challenge for services not exposed to the public internet</div>
+        </div>
+        <div class="project-stack">
+          <span class="stack-tag">Let's Encrypt</span><span class="stack-tag">Certbot</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Nginx</span><span class="stack-tag">Bash</span>
+        </div>
+        <div class="project-cta"><a href="https://case-ssl.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a></div>
+      </div>
+      <div class="project-arrow">↗</div>
+    </div>
 </section>
 
 <!-- SELECTED WORK -->
@@ -1063,9 +1065,9 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
           <div class="contact-link-left"><i class="ti ti-brand-linkedin"></i><span class="contact-link-label">LinkedIn</span></div>
           <div class="contact-link-right"><span class="contact-link-val">/in/noval-ramdani</span><i class="ti ti-arrow-up-right contact-link-arrow"></i></div>
         </a>
-        <a href="https://noval-dev.vercel.app" target="_blank" class="contact-link">
+        <a href="https://noval-ramdani-portofolio.vercel.app" target="_blank" class="contact-link">
           <div class="contact-link-left"><i class="ti ti-world"></i><span class="contact-link-label">Portfolio</span></div>
-          <div class="contact-link-right"><span class="contact-link-val">noval-dev.vercel.app</span><i class="ti ti-arrow-up-right contact-link-arrow"></i></div>
+          <div class="contact-link-right"><span class="contact-link-val">noval-ramdani-portofolio.vercel.app</span><i class="ti ti-arrow-up-right contact-link-arrow"></i></div>
         </a>
         <a href="https://upwork.com" target="_blank" class="contact-link">
           <div class="contact-link-left"><i class="ti ti-brand-upwork"></i><span class="contact-link-label">Upwork</span></div>
