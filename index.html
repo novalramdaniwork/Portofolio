@@ -850,7 +850,7 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
           <span class="stack-tag">Huawei Cloud</span><span class="stack-tag">Kubernetes CCE</span><span class="stack-tag">Jenkins</span><span class="stack-tag">Keycloak</span><span class="stack-tag">Temporal</span>
         </div>
         <div class="project-cta">
-          <a href="https://case-k8s.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
+          <a href="/case-k8s" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
         </div>
       </div>
       <div class="project-arrow">↗</div>
@@ -883,19 +883,21 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
       <div>
         <div class="project-meta">
           <span class="project-num">004</span>
-          <span class="project-type"><i class="ti ti-bell"></i>Monitoring & Alerting</span>
+          <span class="project-type"><i class="ti ti-database"></i>High Availability Database</span>
         </div>
-        <div class="project-name">Automated Server Monitoring + Telegram Alerting</div>
-        <div class="project-desc">Full alerting pipeline via n8n connected to Alertmanager. Dynamic routing per severity — critical alerts to dedicated channels, general to common. Slash command support for on-demand health checks.</div>
+        <div class="project-name">MariaDB Galera Cluster + HAProxy</div>
+        <div class="project-desc">Multi-master synchronous replication cluster with 3 Galera nodes and 2 replicas. HAProxy round-robin load balancing, Keepalived for node health management, and automated nightly backups with 30-day retention to remote VPS.</div>
         <div class="project-highlights">
-          <div class="project-hl">Dynamic alert routing with Switch nodes per severity level</div>
-          <div class="project-hl">/check_server slash command for on-demand health checks</div>
-          <div class="project-hl">Webhook-based Alertmanager integration — zero polling overhead</div>
+          <div class="project-hl">Synchronous multi-master replication — no write lag across nodes</div>
+          <div class="project-hl">Keepalived auto removes/re-adds unhealthy nodes from HAProxy pool</div>
+          <div class="project-hl">Nightly backup via SSH key auth to remote VPS with 30-day retention</div>
         </div>
         <div class="project-stack">
-          <span class="stack-tag">n8n</span><span class="stack-tag">Alertmanager</span><span class="stack-tag">Prometheus</span><span class="stack-tag">Telegram Bot API</span>
+          <span class="stack-tag">MariaDB</span><span class="stack-tag">Galera</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Keepalived</span><span class="stack-tag">Bash</span>
         </div>
-        <div class="project-cta"><a href="https://case-monitoring.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a></div>
+        <div class="project-cta">
+          <a href="/case-galera" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
+        </div>
       </div>
       <div class="project-arrow">↗</div>
     </div>
@@ -904,23 +906,24 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
       <div>
         <div class="project-meta">
           <span class="project-num">005</span>
-          <span class="project-type"><i class="ti ti-lock"></i>Infrastructure Automation</span>
+          <span class="project-type"><i class="ti ti-bell"></i>Monitoring & Alerting</span>
         </div>
-        <div class="project-name">Automated SSL Lifecycle Management</div>
-        <div class="project-desc">Automated wildcard certificate issuance, renewal, validation and deployment across multiple production services behind HAProxy. Zero-downtime reload via USR2 signal, multi-domain support, expiry alerting.</div>
+        <div class="project-name">Automated Server Monitoring + Telegram Alerting</div>
+        <div class="project-desc">Full alerting pipeline via n8n connected to Alertmanager. Dynamic routing per severity — critical alerts to dedicated channels, general to common. Slash command support for on-demand health checks across servers, Kubernetes, databases, and RabbitMQ.</div>
         <div class="project-highlights">
-          <div class="project-hl">Zero-downtime cert renewal via HAProxy USR2 signal reload</div>
-          <div class="project-hl">Wildcard *.domain.id coverage across all subdomains</div>
-          <div class="project-hl">DNS challenge for services not exposed to the public internet</div>
+          <div class="project-hl">Custom threshold-based rules across 6+ service types</div>
+          <div class="project-hl">/check_server slash command for on-demand health checks</div>
+          <div class="project-hl">Severity routing — critical to dedicated channel, warnings to common</div>
         </div>
         <div class="project-stack">
-          <span class="stack-tag">Let's Encrypt</span><span class="stack-tag">Certbot</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Nginx</span><span class="stack-tag">Bash</span>
+          <span class="stack-tag">Prometheus</span><span class="stack-tag">Grafana</span><span class="stack-tag">Alertmanager</span><span class="stack-tag">n8n</span><span class="stack-tag">Telegram Bot API</span>
         </div>
-        <div class="project-cta"><a href="https://case-ssl.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a></div>
+        <div class="project-cta">
+          <a href="/case-monitoring" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
+        </div>
       </div>
       <div class="project-arrow">↗</div>
-    </div>
-</section>
+    </div></section>
 
 <!-- SELECTED WORK -->
 <section id="work">
