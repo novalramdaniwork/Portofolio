@@ -488,6 +488,28 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
 .footer-link i { font-size: 13px; }
 .footer-link:hover { color: var(--black); }
 
+
+/* ── CASE STUDY LINK ── */
+.project-cta {
+  margin-top: 16px;
+}
+.case-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--gray-600); text-decoration: none;
+  letter-spacing: .06em;
+  padding: 8px 16px;
+  border: var(--line);
+  transition: all .2s;
+  cursor: none;
+}
+.case-link i { font-size: 13px; }
+.case-link:hover {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 960px) {
   nav { padding: 0 28px; }
@@ -802,6 +824,9 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
         <div class="project-stack">
           <span class="stack-tag">Huawei Cloud</span><span class="stack-tag">Kubernetes CCE</span><span class="stack-tag">Jenkins</span><span class="stack-tag">Keycloak</span><span class="stack-tag">Temporal</span>
         </div>
+        <div class="project-cta">
+          <a href="https://case-k8s.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
+        </div>
       </div>
       <div class="project-arrow">↗</div>
     </div>
@@ -821,6 +846,9 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
         </div>
         <div class="project-stack">
           <span class="stack-tag">MariaDB</span><span class="stack-tag">Galera</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Bash</span><span class="stack-tag">Linux</span>
+        </div>
+        <div class="project-cta">
+          <a href="https://case-galera.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
         </div>
       </div>
       <div class="project-arrow">↗</div>
@@ -842,6 +870,7 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
         <div class="project-stack">
           <span class="stack-tag">n8n</span><span class="stack-tag">Alertmanager</span><span class="stack-tag">Prometheus</span><span class="stack-tag">Telegram Bot API</span>
         </div>
+        <div class="project-cta"><a href="https://case-monitoring.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a></div>
       </div>
       <div class="project-arrow">↗</div>
     </div>
@@ -862,6 +891,7 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
         <div class="project-stack">
           <span class="stack-tag">Let's Encrypt</span><span class="stack-tag">Certbot</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Nginx</span><span class="stack-tag">Bash</span>
         </div>
+        <div class="project-cta"><a href="https://case-ssl.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a></div>
       </div>
       <div class="project-arrow">↗</div>
     </div>
@@ -881,6 +911,9 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
         </div>
         <div class="project-stack">
           <span class="stack-tag">Kubernetes RKE2</span><span class="stack-tag">Docker</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Prometheus</span><span class="stack-tag">Grafana</span>
+        </div>
+        <div class="project-cta">
+          <a href="https://case-huawei.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
         </div>
       </div>
       <div class="project-arrow">↗</div>
@@ -1032,9 +1065,9 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
           <div class="contact-link-left"><i class="ti ti-brand-linkedin"></i><span class="contact-link-label">LinkedIn</span></div>
           <div class="contact-link-right"><span class="contact-link-val">/in/noval-ramdani</span><i class="ti ti-arrow-up-right contact-link-arrow"></i></div>
         </a>
-        <a href="https://noval-dev.vercel.app" target="_blank" class="contact-link">
+        <a href="https://noval-ramdani-portofolio.vercel.app" target="_blank" class="contact-link">
           <div class="contact-link-left"><i class="ti ti-world"></i><span class="contact-link-label">Portfolio</span></div>
-          <div class="contact-link-right"><span class="contact-link-val">noval-dev.vercel.app</span><i class="ti ti-arrow-up-right contact-link-arrow"></i></div>
+          <div class="contact-link-right"><span class="contact-link-val">noval-ramdani-portofolio.vercel.app</span><i class="ti ti-arrow-up-right contact-link-arrow"></i></div>
         </a>
         <a href="https://upwork.com" target="_blank" class="contact-link">
           <div class="contact-link-left"><i class="ti ti-brand-upwork"></i><span class="contact-link-label">Upwork</span></div>
