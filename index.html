@@ -489,6 +489,30 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
 .footer-link:hover { color: var(--black); }
 
 
+
+/* ── STAT BOX HOVER DETAIL ── */
+.stat-box {
+  transition: all .25s ease;
+}
+.stat-detail {
+  font-size: 11px;
+  color: var(--gray-400);
+  line-height: 1.6;
+  margin-top: 8px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height .3s ease, opacity .3s ease, margin-top .3s ease;
+}
+.stat-box:hover .stat-detail {
+  max-height: 60px;
+  opacity: 1;
+}
+.stat-box:hover {
+  transform: scale(1.03);
+  background: var(--gray-100) !important;
+}
+
 /* ── CASE STUDY LINK ── */
 .project-cta {
   margin-top: 16px;
@@ -621,21 +645,25 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
           <i class="ti ti-cpu stat-icon"></i>
           <div class="stat-num">100+</div>
           <div class="stat-label">Microservices Managed</div>
+          <div class="stat-detail">Across 6 production clusters via Rancher — deployed with GitOps using ArgoCD</div>
         </div>
         <div class="stat-box">
           <i class="ti ti-activity stat-icon"></i>
           <div class="stat-num">99.9%</div>
           <div class="stat-label">Target Uptime</div>
+          <div class="stat-detail">Sustained across dev, staging, and production — zero major incidents</div>
         </div>
         <div class="stat-box">
           <i class="ti ti-clock stat-icon"></i>
           <div class="stat-num">&lt;15m</div>
           <div class="stat-label">MTTR in Production</div>
+          <div class="stat-detail">10+ critical incidents resolved per quarter — all under 15 minutes</div>
         </div>
         <div class="stat-box">
-          <i class="ti ti-infinity stat-icon"></i>
-          <div class="stat-num">∞</div>
-          <div class="stat-label">Things To Improve</div>
+          <i class="ti ti-server stat-icon"></i>
+          <div class="stat-num">300+</div>
+          <div class="stat-label">Servers Managed</div>
+          <div class="stat-detail">From bare-metal monitoring to cloud-native Kubernetes — 5 years of infrastructure ops</div>
         </div>
       </div>
     </div>
@@ -825,7 +853,7 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
           <span class="stack-tag">Kubernetes RKE2</span><span class="stack-tag">Docker</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Prometheus</span><span class="stack-tag">Grafana</span>
         </div>
         <div class="project-cta">
-          <a href="/case-k8s" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
+          <a href="https://case-huawei.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
         </div>
       </div>
       <div class="project-arrow">↗</div>
@@ -850,7 +878,7 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
           <span class="stack-tag">Huawei Cloud</span><span class="stack-tag">Kubernetes CCE</span><span class="stack-tag">Jenkins</span><span class="stack-tag">Keycloak</span><span class="stack-tag">Temporal</span>
         </div>
         <div class="project-cta">
-          <a href="/case-huawei" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
+          <a href="https://case-k8s.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
         </div>
       </div>
       <div class="project-arrow">↗</div>
