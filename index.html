@@ -318,50 +318,104 @@ section { padding: 96px 56px; border-bottom: var(--line); }
 }
 
 /* ── PROJECTS ── */
-.projects-list { border: var(--line); }
-.project-item {
-  padding: 40px 40px; border-bottom: var(--line);
-  display: grid; grid-template-columns: 1fr 32px;
-  gap: 24px; align-items: start;
-  transform: translateX(-20px); opacity: 0;
-  transition: transform .5s ease, opacity .5s ease, background .2s;
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border: var(--line);
 }
-.project-item.visible { transform: translateX(0); opacity: 1; }
-.project-item:nth-child(2) { transition-delay: .08s; }
-.project-item:nth-child(3) { transition-delay: .16s; }
-.project-item:nth-child(4) { transition-delay: .24s; }
-.project-item:nth-child(5) { transition-delay: .32s; }
-.project-item:last-child { border-bottom: none; }
-.project-item:hover { background: var(--gray-100); }
-.project-meta { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
-.project-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gray-400); }
-.project-type {
-  font-family: 'DM Mono', monospace; font-size: 11px;
-  padding: 3px 10px; border: var(--line); color: var(--gray-600);
-  display: inline-flex; align-items: center; gap: 5px;
+.project-card {
+  padding: 28px 24px;
+  border-right: var(--line);
+  border-bottom: var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+  background: var(--white);
+  opacity: 0;
+  transform: translateY(24px);
+  transition: transform .4s cubic-bezier(.22,1,.36,1), box-shadow .35s ease, background .25s ease, opacity .5s ease;
 }
-.project-type i { font-size: 12px; }
-.project-name { font-family: 'DM Serif Display', serif; font-size: 24px; letter-spacing: -.01em; margin-bottom: 10px; }
-.project-desc { font-size: 14px; color: var(--gray-600); line-height: 1.75; font-weight: 300; max-width: 620px; }
-.project-highlights { margin: 14px 0; display: flex; flex-direction: column; gap: 5px; }
-.project-hl {
-  font-size: 13px; color: var(--gray-600);
-  padding-left: 18px; position: relative; font-weight: 300;
+.project-card.visible { opacity: 1; transform: translateY(0); }
+.project-card:nth-child(2) { transition-delay: .06s; }
+.project-card:nth-child(3) { transition-delay: .12s; }
+.project-card:nth-child(4) { transition-delay: .18s; }
+.project-card:nth-child(5) { transition-delay: .24s; }
+.project-card:nth-child(3n) { border-right: none; }
+.project-card:nth-last-child(-n+3) { border-bottom: none; }
+.project-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0,0,0,.09);
+  background: var(--white);
+  z-index: 2;
 }
-.project-hl::before {
-  content: '—'; position: absolute; left: 0;
-  color: var(--gray-400); font-family: 'DM Mono', monospace; font-size: 11px;
+.project-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; width: 0;
+  transition: width .3s ease;
 }
-.project-stack { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
-.stack-tag {
-  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gray-400);
-  padding: 3px 9px; background: var(--gray-200);
+.project-card:hover::before { width: 100%; }
+.project-card:nth-child(1)::before { background: #2d6a4f; }
+.project-card:nth-child(2)::before { background: #1a4a6b; }
+.project-card:nth-child(3)::before { background: #6c3483; }
+.project-card:nth-child(4)::before { background: #1a5276; }
+.project-card:nth-child(5)::before { background: #b7410e; }
+
+.project-card-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--gray-400);
+  letter-spacing: .1em;
 }
-.project-arrow {
-  font-size: 20px; color: var(--gray-400);
-  margin-top: 4px; transition: transform .2s, color .2s; align-self: start;
+.project-card-type {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  padding: 2px 8px; border: var(--line); color: var(--gray-600);
+  display: inline-flex; align-items: center; gap: 4px;
+  align-self: flex-start;
 }
-.project-item:hover .project-arrow { transform: translate(4px,-4px); color: var(--black); }
+.project-card-type i { font-size: 11px; }
+.project-card-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px; line-height: 1.2; letter-spacing: -.01em;
+  color: var(--black);
+}
+.project-card-desc {
+  font-size: 12px; color: var(--gray-600); line-height: 1.65; font-weight: 300;
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height .35s cubic-bezier(.22,1,.36,1), opacity .3s ease;
+}
+.project-card:hover .project-card-desc {
+  max-height: 80px; opacity: 1;
+}
+.project-card-stack {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  margin-top: auto;
+}
+.project-card-tag {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--gray-400); padding: 2px 7px; background: var(--gray-100);
+}
+.project-card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 12px; border-top: var(--line);
+}
+.project-card-cta {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--green); letter-spacing: .06em;
+  display: flex; align-items: center; gap: 5px;
+  opacity: 0; transform: translateX(-6px);
+  transition: opacity .25s ease .05s, transform .25s ease .05s;
+}
+.project-card:hover .project-card-cta { opacity: 1; transform: translateX(0); }
+.project-card-cta i { font-size: 12px; }
+.project-card-arrow {
+  font-size: 16px; color: var(--gray-300);
+  transition: transform .25s ease, color .25s ease;
+}
+.project-card:hover .project-card-arrow { transform: translate(3px,-3px); color: var(--black); }
 
 /* ── SELECTED WORK ── */
 .work-grid {
@@ -546,8 +600,10 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
   .skill-group:nth-child(2n) { border-right: none; }
   .skill-group:nth-child(3n) { border-right: var(--line); }
   .exp-item { grid-template-columns: 1fr; gap: 12px; }
-  .project-item { grid-template-columns: 1fr; padding: 28px 24px; }
-  .project-arrow { display: none; }
+  .projects-grid { grid-template-columns: 1fr; }
+  .project-card { border-right: none !important; }
+  .project-card:nth-last-child(-n+3) { border-bottom: var(--line) !important; }
+  .project-card:last-child { border-bottom: none !important; }
   .work-grid { grid-template-columns: 1fr; }
   .work-card { border-right: none; }
   .phil-inner, .exploring-inner, .contact-inner { grid-template-columns: 1fr; gap: 40px; }
@@ -755,7 +811,7 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
         <div class="exp-desc">Managing and operating multi-environment Kubernetes clusters for enterprise infrastructure, focusing on environment separation, deployment consistency, and CI/CD improvement.</div>
         <ul class="exp-bullets">
           <li>Managing Kubernetes clusters (dev, staging, production) using Rancher</li>
-          <li>Operating KrakenD API Gateway for internal services and traffic management</li>
+          <li>Operating Kraken-based API Gateway for internal services and traffic management</li>
           <li>Maintaining and improving CI/CD workflows with Git-based pipelines</li>
           <li>Contributing to infrastructure standardization and operational best practices</li>
         </ul>
@@ -834,124 +890,105 @@ footer { padding: 32px 56px; display: flex; justify-content: space-between; alig
     <i class="ti ti-terminal-2 section-icon"></i>
     <h2 class="section-title">Selected Projects</h2>
   </div>
-  <div class="projects-list">
+  <div class="projects-grid">
 
-    <div class="project-item">
-      <div>
-        <div class="project-meta">
-          <span class="project-num">001</span>
-          <span class="project-type"><i class="ti ti-server"></i>Infrastructure Platform</span>
-        </div>
-        <div class="project-name">Multi-Node Kubernetes Environment (RKE2)</div>
-        <div class="project-desc">Designed and maintained a highly available RKE2 cluster for application deployment and scaling. Load balancing, persistent storage, full Prometheus monitoring stack, and disaster recovery planning.</div>
-        <div class="project-highlights">
-          <div class="project-hl">RKE2 cluster with multi-node control plane for HA</div>
-          <div class="project-hl">Full Prometheus + Grafana monitoring stack integrated</div>
-          <div class="project-hl">Disaster recovery runbooks and backup planning</div>
-        </div>
-        <div class="project-stack">
-          <span class="stack-tag">Kubernetes RKE2</span><span class="stack-tag">Docker</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Prometheus</span><span class="stack-tag">Grafana</span>
-        </div>
-        <div class="project-cta">
-          <a href="https://case-huawei.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
-        </div>
+    <a href="/case-k8s" class="project-card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="project-card-num">001</span>
+        <span class="project-card-type"><i class="ti ti-server"></i>Infrastructure</span>
       </div>
-      <div class="project-arrow">↗</div>
-    </div>
+      <div class="project-card-name">Production Kubernetes (RKE2)</div>
+      <div class="project-card-desc">HA multi-environment cluster — 3-node control plane, node labeling strategy, GitOps CI/CD, and full Prometheus observability stack.</div>
+      <div class="project-card-stack">
+        <span class="project-card-tag">RKE2</span>
+        <span class="project-card-tag">Rancher</span>
+        <span class="project-card-tag">ArgoCD</span>
+        <span class="project-card-tag">Prometheus</span>
+      </div>
+      <div class="project-card-footer">
+        <span class="project-card-cta"><i class="ti ti-book"></i>Read Case Study</span>
+        <span class="project-card-arrow">↗</span>
+      </div>
+    </a>
+
+    <a href="/case-huawei" class="project-card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="project-card-num">002</span>
+        <span class="project-card-type"><i class="ti ti-cloud-upload"></i>Cloud Migration</span>
+      </div>
+      <div class="project-card-name">On-Premise → Huawei Cloud</div>
+      <div class="project-card-desc">Full migration to CCE dual-region (KR + INA), managed RDS/DMS/DCS, WireGuard VPN tunnel during cutover, and phased rollout strategy.</div>
+      <div class="project-card-stack">
+        <span class="project-card-tag">Huawei Cloud</span>
+        <span class="project-card-tag">CCE</span>
+        <span class="project-card-tag">WireGuard</span>
+        <span class="project-card-tag">Jenkins</span>
+      </div>
+      <div class="project-card-footer">
+        <span class="project-card-cta"><i class="ti ti-book"></i>Read Case Study</span>
+        <span class="project-card-arrow">↗</span>
+      </div>
+    </a>
+
+    <a href="/case-ops" class="project-card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="project-card-num">003</span>
+        <span class="project-card-type"><i class="ti ti-server"></i>Operations</span>
+      </div>
+      <div class="project-card-name">Inherited Infra — Full Ownership</div>
+      <div class="project-card-desc">Solo DevOps ownership of 3 RKE2 clusters, KrakenD API Gateway per environment, NPM + ModSecurity + CrowdSec security stack at entry.</div>
+      <div class="project-card-stack">
+        <span class="project-card-tag">RKE2</span>
+        <span class="project-card-tag">KrakenD</span>
+        <span class="project-card-tag">CrowdSec</span>
+        <span class="project-card-tag">Rancher</span>
+      </div>
+      <div class="project-card-footer">
+        <span class="project-card-cta"><i class="ti ti-book"></i>Read Case Study</span>
+        <span class="project-card-arrow">↗</span>
+      </div>
+    </a>
+
+    <a href="/case-galera" class="project-card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="project-card-num">004</span>
+        <span class="project-card-type"><i class="ti ti-database"></i>HA Database</span>
+      </div>
+      <div class="project-card-name">MariaDB Galera + HAProxy</div>
+      <div class="project-card-desc">3-node synchronous multi-master cluster, HAProxy round-robin, Keepalived health management, and automated nightly backups with 30-day retention.</div>
+      <div class="project-card-stack">
+        <span class="project-card-tag">MariaDB</span>
+        <span class="project-card-tag">Galera</span>
+        <span class="project-card-tag">HAProxy</span>
+        <span class="project-card-tag">Keepalived</span>
+      </div>
+      <div class="project-card-footer">
+        <span class="project-card-cta"><i class="ti ti-book"></i>Read Case Study</span>
+        <span class="project-card-arrow">↗</span>
+      </div>
+    </a>
+
+    <a href="/case-monitoring" class="project-card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="project-card-num">005</span>
+        <span class="project-card-type"><i class="ti ti-bell"></i>Monitoring</span>
+      </div>
+      <div class="project-card-name">Automated Monitoring Stack</div>
+      <div class="project-card-desc">Prometheus → Alertmanager → n8n → Telegram. Severity-based routing, custom threshold rules across 6+ service types, slash command health checks.</div>
+      <div class="project-card-stack">
+        <span class="project-card-tag">Prometheus</span>
+        <span class="project-card-tag">n8n</span>
+        <span class="project-card-tag">Alertmanager</span>
+        <span class="project-card-tag">Telegram</span>
+      </div>
+      <div class="project-card-footer">
+        <span class="project-card-cta"><i class="ti ti-book"></i>Read Case Study</span>
+        <span class="project-card-arrow">↗</span>
+      </div>
+    </a>
 
   </div>
-
-    <div class="project-item">
-      <div>
-        <div class="project-meta">
-          <span class="project-num">002</span>
-          <span class="project-type"><i class="ti ti-cloud-upload"></i>Cloud Migration</span>
-        </div>
-        <div class="project-name">On-Premise to Huawei Cloud Migration</div>
-        <div class="project-desc">Full infrastructure migration to Huawei Cloud. Multi-cluster Kubernetes (CCE) with separate node pools for KR and INA regions, integrating ELB, RDS, Redis, MongoDB, RabbitMQ, OBS. Jenkins CI/CD with SWR container registry.</div>
-        <div class="project-highlights">
-          <div class="project-hl">Multi-cluster CCE with regional node pool separation (KR / INA)</div>
-          <div class="project-hl">Full observability: LTS, CES, SMN → FunctionGraph → Telegram alerting</div>
-          <div class="project-hl">Keycloak SSO + Temporal workflow engine integration</div>
-        </div>
-        <div class="project-stack">
-          <span class="stack-tag">Huawei Cloud</span><span class="stack-tag">Kubernetes CCE</span><span class="stack-tag">Jenkins</span><span class="stack-tag">Keycloak</span><span class="stack-tag">Temporal</span>
-        </div>
-        <div class="project-cta">
-          <a href="https://case-k8s.vercel.app" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
-        </div>
-      </div>
-      <div class="project-arrow">↗</div>
-    </div>
-
-    <div class="project-item">
-      <div>
-        <div class="project-meta">
-          <span class="project-num">003</span>
-          <span class="project-type"><i class="ti ti-server"></i>Infrastructure Operations</span>
-        </div>
-        <div class="project-name">Inherited Infrastructure — Full Ownership</div>
-        <div class="project-desc">Took full operational ownership of a multi-cluster Kubernetes infrastructure as sole DevOps. Three RKE2 clusters managed via Rancher, KrakenD API Gateway per cluster, and a stack of standalone database services — all inherited, all operated solo.</div>
-        <div class="project-highlights">
-          <div class="project-hl">3 × RKE2 clusters (dev/staging/prod) via Rancher — full solo ownership</div>
-          <div class="project-hl">KrakenD API Gateway per cluster — all traffic routed through gateway</div>
-          <div class="project-hl">NPM + ModSecurity + CrowdSec security stack at entry point</div>
-        </div>
-        <div class="project-stack">
-          <span class="stack-tag">Kubernetes RKE2</span><span class="stack-tag">Rancher</span><span class="stack-tag">KrakenD</span><span class="stack-tag">Nginx Proxy Manager</span><span class="stack-tag">CrowdSec</span>
-        </div>
-        <div class="project-cta">
-          <a href="/case-ops" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
-        </div>
-      </div>
-      <div class="project-arrow">↗</div>
-    </div>
-
-    <div class="project-item">
-      <div>
-        <div class="project-meta">
-          <span class="project-num">004</span>
-          <span class="project-type"><i class="ti ti-database"></i>High Availability Database</span>
-        </div>
-        <div class="project-name">MariaDB Galera Cluster + HAProxy</div>
-        <div class="project-desc">Multi-master synchronous replication cluster with 3 Galera nodes and 2 replicas. HAProxy round-robin load balancing, Keepalived for node health management, and automated nightly backups with 30-day retention to remote VPS.</div>
-        <div class="project-highlights">
-          <div class="project-hl">Synchronous multi-master replication — no write lag across nodes</div>
-          <div class="project-hl">Keepalived auto removes/re-adds unhealthy nodes from HAProxy pool</div>
-          <div class="project-hl">Nightly backup via SSH key auth to remote VPS with 30-day retention</div>
-        </div>
-        <div class="project-stack">
-          <span class="stack-tag">MariaDB</span><span class="stack-tag">Galera</span><span class="stack-tag">HAProxy</span><span class="stack-tag">Keepalived</span><span class="stack-tag">Bash</span>
-        </div>
-        <div class="project-cta">
-          <a href="/case-galera" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
-        </div>
-      </div>
-      <div class="project-arrow">↗</div>
-    </div>
-
-    <div class="project-item">
-      <div>
-        <div class="project-meta">
-          <span class="project-num">005</span>
-          <span class="project-type"><i class="ti ti-bell"></i>Monitoring & Alerting</span>
-        </div>
-        <div class="project-name">Automated Server Monitoring + Telegram Alerting</div>
-        <div class="project-desc">Full alerting pipeline via n8n connected to Alertmanager. Dynamic routing per severity — critical alerts to dedicated channels, general to common. Slash command support for on-demand health checks across servers, Kubernetes, databases, and RabbitMQ.</div>
-        <div class="project-highlights">
-          <div class="project-hl">Custom threshold-based rules across 6+ service types</div>
-          <div class="project-hl">/check_server slash command for on-demand health checks</div>
-          <div class="project-hl">Severity routing — critical to dedicated channel, warnings to common</div>
-        </div>
-        <div class="project-stack">
-          <span class="stack-tag">Prometheus</span><span class="stack-tag">Grafana</span><span class="stack-tag">Alertmanager</span><span class="stack-tag">n8n</span><span class="stack-tag">Telegram Bot API</span>
-        </div>
-        <div class="project-cta">
-          <a href="/case-monitoring" target="_blank" class="case-link"><i class="ti ti-book"></i>Read Case Study</a>
-        </div>
-      </div>
-      <div class="project-arrow">↗</div>
-    </div></section>
+</section>
 
 <!-- SELECTED WORK -->
 <section id="work">
@@ -1131,7 +1168,7 @@ function animateCursor(){
   requestAnimationFrame(animateCursor);
 }
 animateCursor();
-document.querySelectorAll('a,button,.project-item,.work-card,.stat-box,.skill-group,.edu-card').forEach(el=>{
+document.querySelectorAll('a,button,.project-card,.work-card,.stat-box,.skill-group,.edu-card').forEach(el=>{
   el.addEventListener('mouseenter',()=>{cursor.classList.add('hovered');ring.classList.add('hovered');});
   el.addEventListener('mouseleave',()=>{cursor.classList.remove('hovered');ring.classList.remove('hovered');});
 });
@@ -1144,7 +1181,9 @@ document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
 const projObserver=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
 },{threshold:.05});
-document.querySelectorAll('.project-item').forEach(el=>projObserver.observe(el));
+document.querySelectorAll('.project-card').forEach(el=>projObserver.observe(el));
+
+
 
 const tagObserver=new IntersectionObserver(entries=>{
   entries.forEach(e=>{
@@ -1171,6 +1210,8 @@ const numObserver=new IntersectionObserver(entries=>{
   });
 },{threshold:.5});
 document.querySelectorAll('.section-num').forEach(el=>numObserver.observe(el));
+
+
 </script>
 </body>
 </html>
