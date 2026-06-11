@@ -3,781 +3,261 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Multi-Cluster Operations — Noval Ramdani</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<title>Inherited Infra — Full Ownership — Noval Ramdani</title>
+<meta name="description" content="Case study: solo DevOps ownership of 3 RKE2 clusters, KrakenD API Gateway per environment, NPM + ModSecurity + CrowdSec security stack.">
+<meta name="author" content="Noval Ramdani">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='3' width='24' height='26' rx='2' fill='%231b1e22' stroke='%23f25c05' stroke-width='2'/><rect x='8' y='7' width='16' height='4' rx='1' fill='%23f25c05'/><rect x='8' y='14' width='16' height='4' rx='1' fill='%233ddc84'/><rect x='8' y='21' width='16' height='4' rx='1' fill='%234dabf7'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:opsz,wght@10..72,600;10..72,700&family=Archivo:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --black:#0d0d0d;--white:#fafaf8;
-  --gray-100:#f4f4f2;--gray-200:#e8e8e4;
-  --gray-400:#9a9a94;--gray-600:#5a5a54;
-  --accent:#6c3483;
-  --accent-light:rgba(108,52,131,.07);
-  --line:1px solid #e0e0da;
-  --line-accent:1px solid rgba(108,52,131,.2);
-}
+:root{--room:#0c0e10;--rack:#14171a;--metal:#1b1f23;--metal-2:#22262b;--metal-3:#2a2f35;
+--steel:#383f46;--steel-2:#4a525a;--ink:#eef1f4;--dim:#97a0a9;--faint:#5d656d;
+--orange:#f25c05;--orange-2:#ff7a2e;--green:#3ddc84;--amber:#ffc24b;--blue:#4dabf7;
+--yellow:#ffd43b;--pink:#ff8787;--sticker:#efece4;
+--d-disp:'Big Shoulders',sans-serif;--d-body:'Archivo',sans-serif;--d-mono:'IBM Plex Mono',monospace}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--black);font-size:15px;line-height:1.6;overflow-x:hidden;cursor:none}
-.cursor{position:fixed;width:10px;height:10px;border-radius:50%;background:var(--black);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s,background .2s}
-.cursor-ring{position:fixed;width:36px;height:36px;border-radius:50%;border:1px solid var(--black);pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s,border-color .3s;opacity:.4}
-.cursor.hovered{width:6px;height:6px;background:var(--accent)}
-.cursor-ring.hovered{width:50px;height:50px;border-color:var(--accent);opacity:.25}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+body{font-family:var(--d-body);background:var(--room);color:var(--ink);font-size:15px;line-height:1.65;overflow-x:hidden}
+::selection{background:var(--orange);color:#0c0e10}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--orange);outline-offset:3px;border-radius:2px}
+body::before{content:'';position:fixed;inset:0;z-index:-1;
+background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+background-size:56px 56px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
 
-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 56px;height:58px;display:flex;align-items:center;justify-content:space-between;background:rgba(250,250,248,.92);backdrop-filter:blur(16px);border-bottom:var(--line);transform:translateY(-100%);animation:navSlide .5s .1s cubic-bezier(.22,1,.36,1) forwards}
-@keyframes navSlide{to{transform:translateY(0)}}
-.nav-left{display:flex;align-items:center;gap:20px}
-.nav-back{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-600);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .2s}
-.nav-back:hover{color:var(--black)}
-.nav-back i{font-size:13px}
-.nav-divider{width:1px;height:16px;background:var(--gray-200)}
-.nav-title{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-400);letter-spacing:.06em}
-.nav-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);padding:3px 10px;border:var(--line-accent);background:var(--accent-light);letter-spacing:.06em}
+/* topbar */
+.topbar{position:sticky;top:0;z-index:90;display:flex;align-items:center;gap:14px;
+background:rgba(12,14,16,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--metal-3);
+padding:11px 20px;font-family:var(--d-mono);font-size:11px}
+.topbar .back{color:var(--dim);text-decoration:none;letter-spacing:.08em;white-space:nowrap;transition:color .2s}
+.topbar .back:hover{color:var(--orange)}
+.topbar .crumb{color:var(--faint);letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .crumb b{color:var(--ink);font-weight:500}
+.topbar .mode{margin-left:auto;color:var(--faint);letter-spacing:.12em;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.topbar .mode i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(61,220,132,.8);animation:blink 2.4s infinite}
+.topbar .mode i.amb{background:var(--amber);box-shadow:0 0 8px rgba(255,194,75,.8)}
 
-.hero{min-height:100vh;padding:130px 56px 80px;border-bottom:var(--line);position:relative;overflow:hidden;display:flex;align-items:flex-end}
-.hero-bg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 50% at 85% 15%,rgba(108,52,131,.05) 0%,transparent 60%),radial-gradient(ellipse 40% 40% at 8% 85%,rgba(108,52,131,.03) 0%,transparent 55%);animation:bgDrift 10s ease-in-out infinite alternate}
-@keyframes bgDrift{from{transform:scale(1) translate(0,0)}to{transform:scale(1.03) translate(8px,-5px)}}
-.hero-dots{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,#d4d4ce 1px,transparent 1px);background-size:32px 32px;opacity:.35;mask-image:radial-gradient(ellipse 90% 90% at 50% 50%,black 30%,transparent 100%)}
-.hero-accent-line{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);opacity:.6}
-.hero-num{font-family:'DM Serif Display',serif;font-size:120px;line-height:1;letter-spacing:-.04em;color:var(--gray-200);position:absolute;top:80px;right:56px;pointer-events:none;opacity:0;animation:fadeUp .7s .2s ease forwards;user-select:none}
-.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;width:100%;max-width:1200px;position:relative}
-.hero-eyebrow{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-400);letter-spacing:.14em;text-transform:uppercase;margin-bottom:24px;display:flex;align-items:center;gap:14px;opacity:0;animation:fadeUp .7s .3s ease forwards}
-.hero-eyebrow::before{content:'';display:block;width:28px;height:1px;background:var(--accent)}
-.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(40px,5vw,68px);line-height:1.0;letter-spacing:-.025em;color:var(--black);margin-bottom:8px;overflow:hidden}
-.hero-title-line{display:block;opacity:0;transform:translateY(100%);animation:lineReveal .8s cubic-bezier(.22,1,.36,1) forwards}
-.hero-title-line:nth-child(1){animation-delay:.45s}
-.hero-title-line:nth-child(2){animation-delay:.6s}
-.hero-title-line:nth-child(3){animation-delay:.72s;color:var(--accent);font-style:italic}
-@keyframes lineReveal{to{opacity:1;transform:translateY(0)}}
-.hero-sub{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:.06em;margin-bottom:28px;opacity:0;animation:fadeUp .6s .85s ease forwards;display:flex;align-items:center;gap:8px}
-.hero-sub i{font-size:14px}
-.handover-pill{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);padding:4px 12px;border:var(--line-accent);background:var(--accent-light);margin-bottom:20px;letter-spacing:.08em;opacity:0;animation:fadeUp .6s .75s ease forwards}
-.hero-desc{font-size:15px;color:var(--gray-600);font-weight:300;line-height:1.8;max-width:460px;opacity:0;animation:fadeUp .6s .95s ease forwards}
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.hero-right{display:flex;flex-direction:column;justify-content:flex-end;opacity:0;animation:fadeUp .7s .8s ease forwards}
-.hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--gray-200);border:var(--line)}
-.stat-box{background:var(--white);padding:28px 24px;position:relative;overflow:hidden;transition:background .2s}
-.stat-box::before{content:'';position:absolute;left:0;top:0;bottom:0;width:0;background:var(--accent);transition:width .25s ease}
-.stat-box:hover::before{width:3px}
-.stat-box:hover{background:var(--gray-100)}
-.stat-icon{font-size:16px;color:var(--gray-300);margin-bottom:10px;display:block}
-.stat-num{font-family:'DM Serif Display',serif;font-size:30px;line-height:1;color:var(--black);margin-bottom:5px}
-.stat-label{font-size:11px;color:var(--gray-400);letter-spacing:.04em}
+/* workbench + pulled unit */
+.bench{max-width:1080px;margin:0 auto;padding:30px 22px 60px}
+.sheet{position:relative;background:linear-gradient(180deg,var(--metal-2) 0%,var(--metal) 12%,var(--metal) 88%,#171a1e 100%);
+border:1px solid var(--steel);border-radius:6px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.scr{position:absolute;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#555d66,#23272c 70%);border:1px solid #0b0d0f;z-index:2}
+.scr::before{content:'';position:absolute;left:1px;right:1px;top:50%;height:1px;background:#0b0d0f;transform:rotate(38deg)}
+.scr.tl{top:7px;left:8px}.scr.tr{top:7px;right:8px}.scr.bl{bottom:7px;left:8px}.scr.br{bottom:7px;right:8px}
+.sheet-head{display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid var(--metal-3);flex-wrap:wrap}
+.u-tag{font-family:var(--d-mono);font-size:10px;letter-spacing:.1em;color:var(--faint);background:#101316;border:1px solid var(--metal-3);padding:3px 8px;border-radius:3px;white-space:nowrap}
+.sheet-head .nm{font-family:var(--d-disp);font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.sheet-head .sub{font-family:var(--d-mono);font-size:10px;color:var(--faint);margin-left:auto;letter-spacing:.08em}
+.led{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 9px rgba(61,220,132,.7);flex-shrink:0}
+.led.amb{background:var(--amber);box-shadow:0 0 9px rgba(255,194,75,.7);animation:blink 1.8s infinite}
+.vents{height:10px;margin:0 28px;background-image:radial-gradient(circle,#0c0e10 1.6px,transparent 1.9px);background-size:9px 9px;background-position:center;opacity:.85}
 
-section{padding:88px 56px;border-bottom:var(--line)}
-.section-header{display:flex;align-items:baseline;gap:16px;margin-bottom:52px}
-.section-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);padding:3px 10px;border:var(--line-accent);background:var(--accent-light);letter-spacing:.08em;text-transform:uppercase;align-self:center}
-.section-title{font-family:'DM Serif Display',serif;font-size:clamp(26px,2.8vw,38px);letter-spacing:-.015em}
-.fade-in{opacity:0;transform:translateY(24px);transition:opacity .65s ease,transform .65s ease}
-.fade-in.visible{opacity:1;transform:translateY(0)}
-.fade-in-d1{transition-delay:.1s}
-.fade-in-d2{transition-delay:.2s}
+/* hero */
+.hero{padding:30px 28px 28px}
+.hero .stencil{font-family:var(--d-disp);font-weight:700;font-size:clamp(38px,6vw,76px);line-height:.96;letter-spacing:.035em;text-transform:uppercase}
+.hero .stencil .o{color:transparent;-webkit-text-stroke:1.4px var(--steel-2)}
+.hero .meta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:16px 0 4px;font-family:var(--d-mono);font-size:11.5px;color:var(--dim)}
+.hero .meta .sep{color:var(--faint)}
+.badge{font-family:var(--d-mono);font-size:10px;letter-spacing:.08em;padding:3px 9px;border-radius:3px;border:1px solid rgba(255,194,75,.45);color:var(--amber)}
+.hero .sum{max-width:680px;color:var(--dim);font-size:15px;margin-top:12px}
+.hero .sum strong{color:var(--ink);font-weight:500}
+.specplate{margin-top:24px;border:1px solid var(--steel);border-radius:4px;background:#101316;display:grid;grid-template-columns:repeat(4,1fr)}
+.spec{padding:15px 17px 13px;border-right:1px solid var(--metal-3)}
+.spec:last-child{border-right:0}
+.spec b{display:block;font-family:var(--d-disp);font-weight:600;font-size:30px;letter-spacing:.03em;line-height:1}
+.spec b em{font-style:normal;color:var(--orange)}
+.spec span{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;display:block;margin-top:7px}
+.spec small{display:block;font-size:11px;color:var(--dim);margin-top:4px;line-height:1.45}
 
-/* Context note */
-.context-note{display:flex;gap:12px;align-items:flex-start;padding:18px 20px;background:var(--accent-light);border:var(--line-accent);margin-bottom:40px}
-.context-note i{font-size:16px;color:var(--accent);flex-shrink:0;margin-top:2px}
-.context-note p{font-size:13px;color:var(--gray-600);font-weight:300;line-height:1.7}
-.context-note strong{color:var(--black);font-weight:500}
+/* panels */
+.panel{margin:0 28px 26px;border:1px solid var(--metal-3);border-radius:5px;background:#181c20;
+opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease}
+.panel.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.panel{opacity:1;transform:none}}
+.panel-head{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px dashed var(--metal-3);flex-wrap:wrap}
+.panel-head .id{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.12em;color:var(--orange)}
+.panel-head h2{font-family:var(--d-disp);font-weight:600;font-size:19px;letter-spacing:.06em;text-transform:uppercase}
+.panel-head .pl{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#34393f;transition:background .4s,box-shadow .4s}
+.panel.on .pl{background:var(--green);box-shadow:0 0 8px rgba(61,220,132,.7)}
+.panel-body{padding:20px}
+.panel-body>p.lead{color:var(--dim);font-size:14px;max-width:760px;margin-bottom:16px}
+.panel-body>p.lead b{color:var(--ink);font-weight:500}
+.quote{font-family:var(--d-disp);font-weight:600;font-size:clamp(19px,2.6vw,26px);letter-spacing:.03em;line-height:1.25;
+border-left:3px solid var(--orange);padding:4px 0 4px 16px;margin-bottom:16px;max-width:780px}
+.note{border:1px dashed var(--steel);border-radius:4px;padding:12px 16px;font-size:13px;color:var(--dim);margin-bottom:16px}
+.note b{color:var(--amber);font-weight:500;font-family:var(--d-mono);font-size:11px;letter-spacing:.08em}
 
-/* Architecture diagram */
-.arch-wrap{background:#0d0a1a;border:var(--line);padding:40px 32px 32px;position:relative;overflow:hidden;border-radius:2px}
-.arch-wrap-label{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:28px}
-.replay-btn{position:absolute;top:14px;right:16px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;color:#ce93d8;background:rgba(206,147,216,.08);border:1px solid rgba(206,147,216,.2);padding:5px 12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
-.replay-btn:hover{background:rgba(206,147,216,.15)}
-.replay-btn i{font-size:12px}
+/* fault cards */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.fault{border:1px solid var(--metal-3);border-radius:4px;background:var(--metal);padding:14px 16px;position:relative}
+.fault::before{content:'FAULT';position:absolute;top:10px;right:12px;font-family:var(--d-mono);font-size:8.5px;letter-spacing:.14em;color:var(--amber);opacity:.85}
+.fault b{display:block;font-weight:500;font-size:14px;margin-bottom:5px;padding-right:48px}
+.fault p{color:var(--dim);font-size:12.5px}
+.card{border:1px solid var(--metal-3);border-radius:4px;background:var(--metal);padding:14px 16px;display:flex;flex-direction:column;gap:7px}
+.card b{font-weight:500;font-size:14px}
+.card p{color:var(--dim);font-size:12.5px;flex:1}
+.card .ft{font-family:var(--d-mono);font-size:9.5px;color:var(--faint);letter-spacing:.06em}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--d-mono);font-size:10px;color:var(--dim);border:1px solid var(--metal-3);border-radius:3px;padding:2px 7px}
+.chip.hot{color:var(--orange);border-color:rgba(242,92,5,.4)}
 
-/* Responsibility areas */
-.resp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:var(--line)}
-.resp-card{padding:32px 28px;border-right:var(--line);border-bottom:var(--line);transition:background .2s}
-.resp-card:nth-child(3n){border-right:none}
-.resp-card:nth-last-child(-n+3){border-bottom:none}
-.resp-card:hover{background:var(--gray-100)}
-.resp-card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.resp-card-icon{font-size:22px;color:var(--accent)}
-.resp-card-title{font-family:'DM Serif Display',serif;font-size:18px}
-.resp-card-desc{font-size:13px;color:var(--gray-600);line-height:1.75;font-weight:300}
-.resp-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:14px}
-.resp-tag{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;background:var(--gray-200);color:var(--gray-600)}
+/* schematic */
+.schem{border:1px solid var(--steel);border-radius:5px;background:#101316;position:relative;overflow:hidden}
+.schem .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:28px 28px;pointer-events:none}
+.schem svg{display:block;width:100%;height:auto;position:relative}
+.schem-bar{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--metal-3);font-family:var(--d-mono);font-size:10px;color:var(--faint);letter-spacing:.1em}
+.schem-bar button{margin-left:auto;font-family:var(--d-mono);font-size:10px;letter-spacing:.1em;color:var(--dim);background:var(--metal-2);border:1px solid var(--steel);border-radius:3px;padding:4px 10px;cursor:pointer;transition:color .2s,border-color .2s}
+.schem-bar button:hover{color:var(--orange);border-color:var(--orange)}
+svg text{font-family:var(--d-mono)}
+svg .bx{fill:var(--metal-2);stroke:var(--steel);stroke-width:1}
+svg .bx2{fill:#161a1e;stroke:var(--metal-3);stroke-width:1}
+svg .t{fill:var(--ink);font-size:11px;font-weight:500}
+svg .s{fill:var(--dim);font-size:9px}
+svg .lbl{fill:var(--faint);font-size:8.5px;letter-spacing:.14em}
+svg .w{fill:none;stroke-width:1.4}
+.schem .d{opacity:0}
+.schem .w{stroke-dasharray:1;stroke-dashoffset:1}
+.schem.go .d{animation:dpop .45s ease both;animation-delay:calc(var(--i)*.08s)}
+.schem.go .w{animation:draw .5s ease both;animation-delay:calc(var(--i)*.08s)}
+@keyframes dpop{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.schem .d{opacity:1}.schem .w{stroke-dashoffset:0}}
+.schem-notes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
 
-/* What I operated */
-.ops-list{display:flex;flex-direction:column;gap:0}
-.ops-item{display:grid;grid-template-columns:48px 1fr;gap:24px;padding:28px 0;border-bottom:var(--line);align-items:start}
-.ops-item:first-child{border-top:var(--line)}
-.ops-num{font-family:'DM Serif Display',serif;font-size:32px;color:var(--gray-200);line-height:1}
-.ops-title{font-size:15px;font-weight:500;margin-bottom:6px}
-.ops-body{font-size:14px;color:var(--gray-600);line-height:1.75;font-weight:300}
-.ops-stack{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
-.ops-stack-tag{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;background:var(--accent-light);color:var(--accent);border:var(--line-accent)}
+/* flow steps */
+.flow{display:grid;gap:10px}
+.step{display:grid;grid-template-columns:46px 1fr;gap:14px;border:1px solid var(--metal-3);border-radius:4px;background:var(--metal);padding:13px 16px}
+.step .n{font-family:var(--d-mono);font-size:12px;color:var(--orange);padding-top:2px}
+.step b{display:block;font-weight:500;font-size:14px;margin-bottom:3px}
+.step b small{font-family:var(--d-mono);font-size:10px;font-weight:400;color:var(--faint);letter-spacing:.06em;margin-left:8px}
+.step p{color:var(--dim);font-size:12.5px}
+.step ul{list-style:none;margin-top:7px}
+.step li{color:var(--dim);font-size:12.5px;padding:2px 0 2px 16px;position:relative}
+.step li::before{content:'▸';position:absolute;left:0;color:var(--orange);font-size:10px}
 
-/* Cluster comparison */
-.cluster-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:var(--line)}
-.cluster-card{padding:28px 24px;border-right:var(--line);transition:background .2s;position:relative;overflow:hidden}
-.cluster-card:last-child{border-right:none}
-.cluster-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);opacity:0;transition:opacity .25s}
-.cluster-card:hover::before{opacity:1}
-.cluster-card:hover{background:var(--gray-100)}
-.cluster-env{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
-.cluster-name{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:12px}
-.cluster-items{display:flex;flex-direction:column;gap:6px}
-.cluster-item{font-size:13px;color:var(--gray-600);padding-left:14px;position:relative;font-weight:300}
-.cluster-item::before{content:'—';position:absolute;left:0;color:var(--gray-400);font-family:'DM Mono',monospace;font-size:11px}
+/* lessons */
+.sop-item{display:grid;grid-template-columns:52px 1fr;gap:14px;padding:13px 0;border-top:1px dashed var(--metal-3)}
+.sop-item:first-child{border-top:0}
+.sop-item b{font-family:var(--d-mono);font-size:11px;color:var(--orange);font-weight:500;padding-top:2px}
+.sop-item strong{display:block;color:var(--ink);font-weight:500;font-size:14.5px;margin-bottom:3px}
+.sop-item span{color:var(--dim);font-size:13px}
 
-/* Security stack */
-.security-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:var(--line)}
-.security-item{padding:32px 28px;border-right:var(--line);border-bottom:var(--line);transition:background .2s}
-.security-item:nth-child(2n){border-right:none}
-.security-item:nth-last-child(-n+2){border-bottom:none}
-.security-item:hover{background:var(--gray-100)}
-.security-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.security-icon{font-size:22px;color:var(--accent)}
-.security-name{font-family:'DM Serif Display',serif;font-size:18px}
-.security-desc{font-size:13px;color:var(--gray-600);line-height:1.75;font-weight:300}
-.security-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);margin-top:10px;display:block;letter-spacing:.06em}
+/* tables */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;text-align:left;font-weight:400;padding:7px 10px;border-bottom:1px solid var(--steel)}
+.tbl td{padding:9px 10px;border-bottom:1px dashed var(--metal-3);color:var(--dim);vertical-align:top}
+.tbl td:first-child{color:var(--ink)}
+.tbl tr:last-child td{border-bottom:0}
+.sev{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.08em;padding:2px 8px;border-radius:3px;border:1px solid;white-space:nowrap}
+.sev.hi{color:var(--pink);border-color:rgba(255,135,135,.4)}
+.sev.md{color:var(--amber);border-color:rgba(255,194,75,.4)}
+.sev.lo{color:var(--blue);border-color:rgba(77,171,247,.4)}
+.tbl td.arrow{color:var(--orange);font-family:var(--d-mono);white-space:nowrap}
+.cmd{font-family:var(--d-mono);font-size:12px;color:var(--green)}
 
-/* Improvements made */
-.improvements{display:flex;flex-direction:column;gap:0;border:var(--line)}
-.improvement-item{display:grid;grid-template-columns:200px 1fr;gap:0;border-bottom:var(--line)}
-.improvement-item:last-child{border-bottom:none}
-.improvement-left{padding:24px 24px;border-right:var(--line);background:var(--gray-100);display:flex;flex-direction:column;justify-content:center}
-.improvement-badge{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);padding:3px 8px;border:var(--line-accent);background:var(--accent-light);display:inline-block;margin-bottom:8px;letter-spacing:.06em}
-.improvement-area{font-family:'DM Serif Display',serif;font-size:16px}
-.improvement-right{padding:24px 28px}
-.improvement-title{font-size:14px;font-weight:500;margin-bottom:6px}
-.improvement-body{font-size:13px;color:var(--gray-600);line-height:1.75;font-weight:300}
+/* footer nav */
+.casenav{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 28px 28px}
+.casenav a{display:flex;align-items:center;gap:14px;border:1px solid var(--steel);border-radius:4px;background:linear-gradient(180deg,var(--metal-2),var(--metal));padding:14px 18px;text-decoration:none;transition:border-color .25s,transform .15s}
+.casenav a:hover{border-color:var(--orange);transform:translateY(-2px)}
+.casenav .dir{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.12em;color:var(--faint)}
+.casenav .ttl{font-family:var(--d-disp);font-weight:600;font-size:16px;letter-spacing:.05em;text-transform:uppercase}
+.casenav a.next{justify-content:flex-end;text-align:right}
+footer{text-align:center;padding:8px 16px 26px;font-family:var(--d-mono);font-size:10px;color:var(--faint);letter-spacing:.08em}
+footer a{color:var(--dim)}
 
-/* Lessons */
-.lessons-list{display:flex;flex-direction:column;gap:0}
-.lesson-item{display:grid;grid-template-columns:48px 1fr;gap:24px;padding:28px 0;border-bottom:var(--line);align-items:start}
-.lesson-item:first-child{border-top:var(--line)}
-.lesson-num{font-family:'DM Serif Display',serif;font-size:32px;color:var(--gray-200);line-height:1}
-.lesson-title{font-size:15px;font-weight:500;margin-bottom:6px}
-.lesson-body{font-size:14px;color:var(--gray-600);line-height:1.75;font-weight:300}
-
-.bottom-nav{padding:56px 56px;display:flex;justify-content:space-between;align-items:center}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;font-size:13px;font-weight:400;text-decoration:none;letter-spacing:.02em;transition:all .2s;cursor:none;border:none;font-family:'DM Sans',sans-serif}
-.btn i{font-size:15px}
-.btn-outline{background:transparent;color:var(--black);border:var(--line)}
-.btn-outline:hover{background:var(--gray-100)}
-.next-case{display:flex;flex-direction:column;align-items:flex-end;gap:6px;text-decoration:none;color:var(--black);transition:opacity .2s}
-.next-case:hover{opacity:.7}
-.next-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-400);letter-spacing:.08em}
-.next-title{font-family:'DM Serif Display',serif;font-size:20px}
-
-footer{padding:28px 56px;border-top:var(--line);display:flex;justify-content:space-between;align-items:center}
-.footer-copy{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-400)}
-.footer-links{display:flex;gap:24px}
-.footer-link{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-400);text-decoration:none;transition:color .2s;display:flex;align-items:center;gap:5px}
-.footer-link:hover{color:var(--black)}
-
-@media(max-width:960px){
-  nav,.bottom-nav,footer{padding-left:28px;padding-right:28px}
-  .hero{padding:110px 28px 60px}
-  .hero-num{display:none}
-  section{padding:64px 28px}
-  .hero-grid{grid-template-columns:1fr;gap:40px}
-  .resp-grid,.cluster-grid{grid-template-columns:1fr}
-  .resp-card,.cluster-card{border-right:none;border-bottom:var(--line)}
-  .security-grid{grid-template-columns:1fr}
-  .security-item{border-right:none}
-  .improvement-item{grid-template-columns:1fr}
-  .improvement-left{border-right:none;border-bottom:var(--line)}
-  .bottom-nav{flex-direction:column;gap:32px;align-items:flex-start}
+@media (max-width:760px){
+.bench{padding:18px 10px 44px}
+.hero{padding:22px 16px}
+.panel{margin:0 16px 20px}
+.panel-body{padding:16px 14px}
+.sheet-head{padding:12px 16px}
+.vents{margin:0 16px}
+.specplate{grid-template-columns:1fr 1fr}
+.spec:nth-child(2){border-right:0}
+.spec:nth-child(1),.spec:nth-child(2){border-bottom:1px solid var(--metal-3)}
+.grid2,.grid3,.schem-notes{grid-template-columns:1fr}
+.casenav{grid-template-columns:1fr;margin:0 16px 22px}
+.topbar{padding:10px 12px;gap:10px}
+.topbar .mode span{display:none}
+.tblwrap{overflow-x:auto}
+.tbl{min-width:560px}
 }
 </style>
 </head>
 <body>
-
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-
-<nav>
-  <div class="nav-left">
-    <a href="/" class="nav-back"><i class="ti ti-arrow-left"></i>Portfolio</a>
-    <div class="nav-divider"></div>
-    <span class="nav-title">Case Study</span>
-  </div>
-  <div class="nav-tag">003 · Infrastructure Operations</div>
+<nav class="topbar" aria-label="Case study navigation">
+  <a class="back" href="/">◂ RETURN UNIT TO RACK-01</a>
+  <span class="crumb">/ <b>PRJ-003</b> · MULTI-CLUSTER OPERATIONS</span>
+  <span class="mode"><span>INSPECTION MODE</span> <i></i></span>
 </nav>
-
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-dots"></div>
-  <div class="hero-accent-line"></div>
-  <div class="hero-num">003</div>
-  <div class="hero-grid">
-    <div>
-      <p class="hero-eyebrow">Operations · Multi-Cluster · Solo DevOps</p>
-      <div class="handover-pill"><i class="ti ti-package-import" style="font-size:12px"></i>Inherited Infrastructure — Full Ownership</div>
-      <h1 class="hero-title">
-        <span class="hero-title-line">Multi-Cluster</span>
-        <span class="hero-title-line">Infrastructure</span>
-        <span class="hero-title-line">Operations</span>
-      </h1>
-      <p class="hero-sub"><i class="ti ti-server"></i>3 clusters · KrakenD API Gateway · Rancher · Solo DevOps</p>
-      <p class="hero-desc">
-        Took full ownership of an inherited multi-cluster Kubernetes infrastructure as the sole 
-        DevOps engineer. Responsible for operating, maintaining, and improving three separate 
-        RKE2 clusters across dev, staging, and production — along with a stack of standalone 
-        database and messaging services. This case study documents what I operate, how I 
-        improved it, and the decisions I made along the way.
-      </p>
-    </div>
-    <div class="hero-right">
-      <div class="hero-stats">
-        <div class="stat-box">
-          <i class="ti ti-hexagons stat-icon"></i>
-          <div class="stat-num">3</div>
-          <div class="stat-label">RKE2 Clusters</div>
-        </div>
-        <div class="stat-box">
-          <i class="ti ti-user stat-icon"></i>
-          <div class="stat-num">Solo</div>
-          <div class="stat-label">Full DevOps Ownership</div>
-        </div>
-        <div class="stat-box">
-          <i class="ti ti-topology-ring stat-icon"></i>
-          <div class="stat-num">3×</div>
-          <div class="stat-label">KrakenD Instances</div>
-        </div>
-        <div class="stat-box">
-          <i class="ti ti-database stat-icon"></i>
-          <div class="stat-num">5</div>
-          <div class="stat-label">Standalone DB Services</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CONTEXT -->
-<section>
-  <div class="section-header fade-in">
-    <div class="section-tag">01</div>
-    <h2 class="section-title">Context & Ownership</h2>
-  </div>
-
-  <div class="context-note fade-in">
-    <i class="ti ti-info-circle"></i>
-    <p>
-      <strong>Handover context:</strong> This infrastructure was built before I joined. 
-      I inherited it as the sole DevOps engineer and took full operational ownership — 
-      responsible for uptime, deployments, incident response, and continuous improvement. 
-      Infrastructure details are intentionally generalized for confidentiality.
-    </p>
-  </div>
-
-  <div class="resp-grid fade-in fade-in-d1">
-    <div class="resp-card">
-      <div class="resp-card-header">
-        <i class="ti ti-hexagons resp-card-icon"></i>
-        <div class="resp-card-title">Cluster Management</div>
-      </div>
-      <div class="resp-card-desc">Operate and maintain three separate RKE2 clusters managed through Rancher. Each environment is isolated — dev for active development, staging for pre-release validation, production for live traffic.</div>
-      <div class="resp-tags">
-        <span class="resp-tag">RKE2</span>
-        <span class="resp-tag">Rancher</span>
-        <span class="resp-tag">dev / staging / prod</span>
-      </div>
-    </div>
-    <div class="resp-card">
-      <div class="resp-card-header">
-        <i class="ti ti-topology-ring resp-card-icon"></i>
-        <div class="resp-card-title">API Gateway</div>
-      </div>
-      <div class="resp-card-desc">Each cluster has its own KrakenD API Gateway instance. All external requests hit Nginx Proxy Manager first, then route through KrakenD before reaching microservices. KrakenD handles routing, rate limiting, and auth validation.</div>
-      <div class="resp-tags">
-        <span class="resp-tag">KrakenD</span>
-        <span class="resp-tag">NPM</span>
-        <span class="resp-tag">API routing</span>
-      </div>
-    </div>
-    <div class="resp-card">
-      <div class="resp-card-header">
-        <i class="ti ti-database resp-card-icon"></i>
-        <div class="resp-card-title">Database Operations</div>
-      </div>
-      <div class="resp-card-desc">Five standalone database and messaging services running outside Kubernetes. MariaDB with a 2-master + 1-replica setup, MongoDB, Redis, RabbitMQ, and MinIO — all on dedicated servers, all managed solo.</div>
-      <div class="resp-tags">
-        <span class="resp-tag">MariaDB</span>
-        <span class="resp-tag">MongoDB</span>
-        <span class="resp-tag">Redis</span>
-        <span class="resp-tag">RabbitMQ</span>
-        <span class="resp-tag">MinIO</span>
-      </div>
-    </div>
-    <div class="resp-card">
-      <div class="resp-card-header">
-        <i class="ti ti-shield resp-card-icon"></i>
-        <div class="resp-card-title">Security Layer</div>
-      </div>
-      <div class="resp-card-desc">ModSecurity (WAF) and CrowdSec (IPS) integrated into the Nginx Proxy Manager layer. ModSec filters malicious requests at the HTTP level, CrowdSec provides behavioral threat detection and automatic IP banning.</div>
-      <div class="resp-tags">
-        <span class="resp-tag">ModSecurity</span>
-        <span class="resp-tag">CrowdSec</span>
-        <span class="resp-tag">Nginx Proxy Manager</span>
-      </div>
-    </div>
-    <div class="resp-card">
-      <div class="resp-card-header">
-        <i class="ti ti-git-branch resp-card-icon"></i>
-        <div class="resp-card-title">CI/CD & Deployments</div>
-      </div>
-      <div class="resp-card-desc">Manage and improve the deployment pipeline across all three environments. Ensure dev and staging pipelines run automatically while production deployments require explicit approval before rollout.</div>
-      <div class="resp-tags">
-        <span class="resp-tag">Jenkins</span>
-        <span class="resp-tag">GitLab CI</span>
-        <span class="resp-tag">ArgoCD</span>
-      </div>
-    </div>
-    <div class="resp-card">
-      <div class="resp-card-header">
-        <i class="ti ti-bell resp-card-icon"></i>
-        <div class="resp-card-title">Monitoring & Alerting</div>
-      </div>
-      <div class="resp-card-desc">Full monitoring coverage across clusters, standalone servers, and all database services. Custom alert rules with Telegram integration for on-call notifications — all managed and tuned by one person.</div>
-      <div class="resp-tags">
-        <span class="resp-tag">Prometheus</span>
-        <span class="resp-tag">Grafana</span>
-        <span class="resp-tag">Alertmanager</span>
-        <span class="resp-tag">Telegram</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ARCHITECTURE -->
-<section>
-  <div class="section-header fade-in">
-    <div class="section-tag">02</div>
-    <h2 class="section-title">Infrastructure Architecture</h2>
-  </div>
-  <p class="fade-in" style="font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8;max-width:700px;margin-bottom:36px">
-    All external traffic enters through Nginx Proxy Manager with ModSecurity and CrowdSec 
-    enforcing security at the edge. Requests then route to the appropriate KrakenD instance 
-    per cluster. Standalone database services sit outside Kubernetes and are shared 
-    across clusters based on application needs.
-  </p>
-
-  <div class="arch-wrap fade-in fade-in-d1" id="archContainer">
-    <div class="arch-wrap-label">Infrastructure Architecture · Multi-Cluster · Sentral Link Solutions</div>
-    <button class="replay-btn" onclick="runArchAnim()"><i class="ti ti-refresh"></i>Replay</button>
-
-    <svg id="archSvg" viewBox="0 0 900 560" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%">
-      <defs>
-        <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L6,3 z" fill="rgba(206,147,216,0.7)"/>
-        </marker>
-      </defs>
-
-      <!-- STEP 1: Internet / User -->
-      <g id="s1" opacity="0" transform="translate(0,-8)">
-        <circle cx="450" cy="28" r="18" fill="rgba(206,147,216,0.15)" stroke="rgba(206,147,216,0.5)" stroke-width="1.5"/>
-        <text x="450" y="33" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#ce93d8">USER</text>
-        <line x1="450" y1="46" x2="450" y2="64" stroke="rgba(206,147,216,0.5)" stroke-width="1.5" marker-end="url(#arr)"/>
-      </g>
-
-      <!-- STEP 2: NPM + ModSec + CrowdSec -->
-      <g id="s2" opacity="0" transform="translate(0,-6)">
-        <rect x="280" y="64" width="340" height="52" rx="5" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.4)" stroke-width="1.5"/>
-        <text x="450" y="84" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ce93d8" font-weight="500">Nginx Proxy Manager</text>
-        <text x="340" y="102" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(206,147,216,0.6)">ModSecurity (WAF)</text>
-        <text x="450" y="102" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(244,67,54,0.6)">·</text>
-        <text x="560" y="102" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(206,147,216,0.6)">CrowdSec (IPS)</text>
-        <!-- arrows down to 3 clusters -->
-        <line x1="340" y1="116" x2="200" y2="150" stroke="rgba(206,147,216,0.4)" stroke-width="1.5" marker-end="url(#arr)"/>
-        <line x1="450" y1="116" x2="450" y2="150" stroke="rgba(206,147,216,0.4)" stroke-width="1.5" marker-end="url(#arr)"/>
-        <line x1="560" y1="116" x2="700" y2="150" stroke="rgba(206,147,216,0.4)" stroke-width="1.5" marker-end="url(#arr)"/>
-      </g>
-
-      <!-- STEP 3: 3 Clusters -->
-      <!-- DEV cluster -->
-      <g id="s3-dev" opacity="0" transform="translate(-8,0)">
-        <rect x="100" y="150" width="210" height="160" rx="5" fill="rgba(108,52,131,0.1)" stroke="rgba(206,147,216,0.2)" stroke-width="1" stroke-dasharray="4 3"/>
-        <text x="205" y="166" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="rgba(206,147,216,0.4)" letter-spacing="2">DEV CLUSTER</text>
-        <rect x="116" y="174" width="80" height="36" rx="3" fill="rgba(108,52,131,0.25)" stroke="rgba(206,147,216,0.35)" stroke-width="1.5"/>
-        <text x="156" y="189" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8" font-weight="500">KrakenD</text>
-        <text x="156" y="201" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(206,147,216,0.5)">API Gateway</text>
-        <rect x="116" y="220" width="178" height="76" rx="3" fill="rgba(108,52,131,0.08)" stroke="rgba(206,147,216,0.15)" stroke-width="1" stroke-dasharray="3 2"/>
-        <text x="205" y="235" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(206,147,216,0.35)">microservices</text>
-        <rect x="124" y="241" width="48" height="44" rx="2" fill="rgba(108,52,131,0.2)" stroke="rgba(206,147,216,0.2)" stroke-width="1"/>
-        <text x="148" y="261" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#ce93d8">svc-a</text>
-        <text x="148" y="272" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(206,147,216,0.4)">pod</text>
-        <rect x="178" y="241" width="48" height="44" rx="2" fill="rgba(108,52,131,0.2)" stroke="rgba(206,147,216,0.2)" stroke-width="1"/>
-        <text x="202" y="261" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#ce93d8">svc-b</text>
-        <text x="202" y="272" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(206,147,216,0.4)">pod</text>
-        <rect x="228" y="241" width="48" height="44" rx="2" fill="rgba(108,52,131,0.2)" stroke="rgba(206,147,216,0.2)" stroke-width="1"/>
-        <text x="252" y="261" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#ce93d8">svc-c</text>
-        <text x="252" y="272" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(206,147,216,0.4)">pod</text>
-        <!-- RKE2 label -->
-        <text x="205" y="300" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(206,147,216,0.3)">RKE2 · Rancher</text>
-      </g>
-
-      <!-- STAGING cluster -->
-      <g id="s3-staging" opacity="0" transform="translate(0,0)">
-        <rect x="345" y="150" width="210" height="160" rx="5" fill="rgba(108,52,131,0.1)" stroke="rgba(206,147,216,0.25)" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <text x="450" y="166" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="rgba(206,147,216,0.5)" letter-spacing="2">STAGING CLUSTER</text>
-        <rect x="361" y="174" width="80" height="36" rx="3" fill="rgba(108,52,131,0.25)" stroke="rgba(206,147,216,0.35)" stroke-width="1.5"/>
-        <text x="401" y="189" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8" font-weight="500">KrakenD</text>
-        <text x="401" y="201" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(206,147,216,0.5)">API Gateway</text>
-        <rect x="361" y="220" width="178" height="76" rx="3" fill="rgba(108,52,131,0.08)" stroke="rgba(206,147,216,0.15)" stroke-width="1" stroke-dasharray="3 2"/>
-        <text x="450" y="235" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(206,147,216,0.35)">microservices</text>
-        <rect x="369" y="241" width="48" height="44" rx="2" fill="rgba(108,52,131,0.2)" stroke="rgba(206,147,216,0.2)" stroke-width="1"/>
-        <text x="393" y="261" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#ce93d8">svc-a</text>
-        <rect x="423" y="241" width="48" height="44" rx="2" fill="rgba(108,52,131,0.2)" stroke="rgba(206,147,216,0.2)" stroke-width="1"/>
-        <text x="447" y="261" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#ce93d8">svc-b</text>
-        <rect x="477" y="241" width="48" height="44" rx="2" fill="rgba(108,52,131,0.2)" stroke="rgba(206,147,216,0.2)" stroke-width="1"/>
-        <text x="501" y="261" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#ce93d8">svc-c</text>
-        <text x="450" y="300" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(206,147,216,0.3)">RKE2 · Rancher</text>
-      </g>
-
-      <!-- PROD cluster -->
-      <g id="s3-prod" opacity="0" transform="translate(8,0)">
-        <rect x="590" y="150" width="210" height="160" rx="5" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.4)" stroke-width="2"/>
-        <text x="695" y="166" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="rgba(206,147,216,0.6)" letter-spacing="2">PROD CLUSTER</text>
-        <rect x="606" y="174" width="80" height="36" rx="3" fill="rgba(108,52,131,0.3)" stroke="rgba(206,147,216,0.5)" stroke-width="2"/>
-        <text x="646" y="189" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8" font-weight="500">KrakenD</text>
-        <text x="646" y="201" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(206,147,216,0.5)">API Gateway</text>
-        <rect x="606" y="220" width="178" height="76" rx="3" fill="rgba(108,52,131,0.1)" stroke="rgba(206,147,216,0.2)" stroke-width="1" stroke-dasharray="3 2"/>
-        <text x="695" y="235" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(206,147,216,0.4)">microservices</text>
-        <rect x="614" y="241" width="48" height="44" rx="2" fill="rgba(108,52,131,0.25)" stroke="rgba(206,147,216,0.3)" stroke-width="1"/>
-        <text x="638" y="261" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#ce93d8">svc-a</text>
-        <rect x="668" y="241" width="48" height="44" rx="2" fill="rgba(108,52,131,0.25)" stroke="rgba(206,147,216,0.3)" stroke-width="1"/>
-        <text x="692" y="261" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#ce93d8">svc-b</text>
-        <rect x="722" y="241" width="48" height="44" rx="2" fill="rgba(108,52,131,0.25)" stroke="rgba(206,147,216,0.3)" stroke-width="1"/>
-        <text x="746" y="261" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="#ce93d8">svc-c</text>
-        <text x="695" y="300" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="rgba(206,147,216,0.3)">RKE2 · Rancher</text>
-      </g>
-
-      <!-- STEP 4: Standalone DB layer -->
-      <g id="s4" opacity="0" transform="translate(0,8)">
-        <rect x="60" y="340" width="780" height="90" rx="4" fill="rgba(108,52,131,0.07)" stroke="rgba(206,147,216,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
-        <text x="80" y="357" font-family="'DM Mono',monospace" font-size="9" fill="rgba(206,147,216,0.35)" letter-spacing="2">STANDALONE DATABASE SERVERS</text>
-
-        <rect x="76" y="364" width="118" height="56" rx="3" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.2)" stroke-width="1"/>
-        <text x="135" y="382" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8">MariaDB</text>
-        <text x="135" y="394" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(206,147,216,0.5)">Master 1 + Master 2</text>
-        <text x="135" y="410" text-anchor="middle" font-family="'DM Mono',monospace" font-size="6" fill="rgba(206,147,216,0.35)">+ Replica node</text>
-
-        <rect x="202" y="364" width="90" height="56" rx="3" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.2)" stroke-width="1"/>
-        <text x="247" y="382" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8">MongoDB</text>
-        <text x="247" y="397" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(206,147,216,0.5)">standalone</text>
-
-        <rect x="300" y="364" width="90" height="56" rx="3" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.2)" stroke-width="1"/>
-        <text x="345" y="382" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8">Redis</text>
-        <text x="345" y="397" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(206,147,216,0.5)">cache / session</text>
-
-        <rect x="398" y="364" width="90" height="56" rx="3" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.2)" stroke-width="1"/>
-        <text x="443" y="382" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8">RabbitMQ</text>
-        <text x="443" y="397" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(206,147,216,0.5)">messaging</text>
-
-        <rect x="496" y="364" width="90" height="56" rx="3" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.2)" stroke-width="1"/>
-        <text x="541" y="382" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8">MinIO</text>
-        <text x="541" y="397" text-anchor="middle" font-family="'DM Mono',monospace" font-size="7" fill="rgba(206,147,216,0.5)">object storage</text>
-
-        <!-- Connection lines from clusters to DB -->
-        <line x1="205" y1="330" x2="205" y2="340" stroke="rgba(206,147,216,0.25)" stroke-width="1" stroke-dasharray="3 2"/>
-        <line x1="450" y1="330" x2="450" y2="340" stroke="rgba(206,147,216,0.25)" stroke-width="1" stroke-dasharray="3 2"/>
-        <line x1="695" y1="330" x2="695" y2="340" stroke="rgba(206,147,216,0.25)" stroke-width="1" stroke-dasharray="3 2"/>
-      </g>
-
-      <!-- STEP 5: Monitoring layer -->
-      <g id="s5" opacity="0" transform="translate(0,6)">
-        <rect x="60" y="448" width="780" height="52" rx="4" fill="rgba(108,52,131,0.05)" stroke="rgba(206,147,216,0.1)" stroke-width="1" stroke-dasharray="4 3"/>
-        <text x="80" y="464" font-family="'DM Mono',monospace" font-size="9" fill="rgba(206,147,216,0.3)" letter-spacing="2">MONITORING · ALERTING</text>
-        <rect x="80" y="470" width="88" height="22" rx="2" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.15)" stroke-width="1"/>
-        <text x="124" y="485" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8">Prometheus</text>
-        <rect x="176" y="470" width="80" height="22" rx="2" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.15)" stroke-width="1"/>
-        <text x="216" y="485" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8">Grafana</text>
-        <rect x="264" y="470" width="100" height="22" rx="2" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.15)" stroke-width="1"/>
-        <text x="314" y="485" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8">Alertmanager</text>
-        <rect x="372" y="470" width="60" height="22" rx="2" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.15)" stroke-width="1"/>
-        <text x="402" y="485" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8">n8n</text>
-        <rect x="440" y="470" width="100" height="22" rx="2" fill="rgba(108,52,131,0.15)" stroke="rgba(206,147,216,0.15)" stroke-width="1"/>
-        <text x="490" y="485" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ce93d8">Telegram Bot</text>
-      </g>
-    </svg>
-  </div>
-</section>
-
-<!-- WHAT I OPERATE -->
-<section>
-  <div class="section-header fade-in">
-    <div class="section-tag">03</div>
-    <h2 class="section-title">What I Operate</h2>
-  </div>
-  <div class="ops-list fade-in">
-    <div class="ops-item">
-      <div class="ops-num">01</div>
-      <div>
-        <div class="ops-title">3 × RKE2 Kubernetes Clusters via Rancher</div>
-        <div class="ops-body">Dev, staging, and production clusters — each isolated, each managed through Rancher. Responsible for node health, workload scheduling, resource quotas, and rolling deployments. Production cluster runs live traffic; dev and staging are auto-deployed on push.</div>
-        <div class="ops-stack">
-          <span class="ops-stack-tag">Kubernetes RKE2</span>
-          <span class="ops-stack-tag">Rancher</span>
-          <span class="ops-stack-tag">Helm</span>
-        </div>
-      </div>
-    </div>
-    <div class="ops-item">
-      <div class="ops-num">02</div>
-      <div>
-        <div class="ops-title">KrakenD API Gateway — Per Cluster</div>
-        <div class="ops-body">Three separate KrakenD instances — one per cluster. Every API call from external clients goes through KrakenD before reaching any microservice. Responsible for gateway config management: routes, rate limits, auth validation, and timeout policies. Any config change in one environment must be validated before propagating to production.</div>
-        <div class="ops-stack">
-          <span class="ops-stack-tag">KrakenD</span>
-          <span class="ops-stack-tag">API routing</span>
-          <span class="ops-stack-tag">Rate limiting</span>
-        </div>
-      </div>
-    </div>
-    <div class="ops-item">
-      <div class="ops-num">03</div>
-      <div>
-        <div class="ops-title">Nginx Proxy Manager + ModSecurity + CrowdSec</div>
-        <div class="ops-body">NPM is the single entry point for all external traffic. ModSecurity (WAF) inspects and blocks malicious HTTP requests at the edge. CrowdSec provides behavioral analysis — if a source exhibits attack patterns, it gets banned automatically. Managing security rules and CrowdSec bouncer lists is an active responsibility.</div>
-        <div class="ops-stack">
-          <span class="ops-stack-tag">NPM</span>
-          <span class="ops-stack-tag">ModSecurity</span>
-          <span class="ops-stack-tag">CrowdSec</span>
-          <span class="ops-stack-tag">SSL/TLS</span>
-        </div>
-      </div>
-    </div>
-    <div class="ops-item">
-      <div class="ops-num">04</div>
-      <div>
-        <div class="ops-title">MariaDB — 2 Masters + 1 Replica</div>
-        <div class="ops-body">Two MariaDB master nodes with different data sets — Master 1 and Master 2 serve different application domains within the same platform. Both replicate to a single replica node, which acts as a full backup of all data. Responsible for replication health monitoring, backup schedules, user privilege management, and manual failover if needed.</div>
-        <div class="ops-stack">
-          <span class="ops-stack-tag">MariaDB</span>
-          <span class="ops-stack-tag">Replication</span>
-          <span class="ops-stack-tag">Backup automation</span>
-        </div>
-      </div>
-    </div>
-    <div class="ops-item">
-      <div class="ops-num">05</div>
-      <div>
-        <div class="ops-title">Standalone: MongoDB · Redis · RabbitMQ · MinIO</div>
-        <div class="ops-body">Four additional standalone services — each on dedicated servers outside Kubernetes. MongoDB for document storage, Redis for caching and session management, RabbitMQ for async messaging between services, and MinIO for object storage. All were inherited; responsibility includes monitoring, patching, and ensuring availability.</div>
-        <div class="ops-stack">
-          <span class="ops-stack-tag">MongoDB</span>
-          <span class="ops-stack-tag">Redis</span>
-          <span class="ops-stack-tag">RabbitMQ</span>
-          <span class="ops-stack-tag">MinIO</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- SECURITY LAYER -->
-<section>
-  <div class="section-header fade-in">
-    <div class="section-tag">04</div>
-    <h2 class="section-title">Security Layer</h2>
-  </div>
-  <div class="security-grid fade-in">
-    <div class="security-item">
-      <div class="security-header">
-        <i class="ti ti-shield security-icon"></i>
-        <div class="security-name">ModSecurity (WAF)</div>
-      </div>
-      <div class="security-desc">Web Application Firewall integrated into Nginx Proxy Manager. ModSec inspects every incoming HTTP request against OWASP Core Rule Set — blocking SQL injection, XSS, path traversal, and other common attack patterns before they reach any application layer. Running in detection + blocking mode on production.</div>
-      <span class="security-tag">// Layer: HTTP Inspection · OWASP CRS</span>
-    </div>
-    <div class="security-item">
-      <div class="security-header">
-        <i class="ti ti-eye security-icon"></i>
-        <div class="security-name">CrowdSec (IPS)</div>
-      </div>
-      <div class="security-desc">Behavioral Intrusion Prevention System running alongside NPM. CrowdSec analyzes access logs in real time — if a source IP exhibits attack behavior (brute force, scanning, probing), it gets automatically banned via the NPM bouncer. Shares threat intelligence with the CrowdSec community network for proactive blocking.</div>
-      <span class="security-tag">// Layer: Behavioral Analysis · IP Reputation</span>
-    </div>
-    <div class="security-item">
-      <div class="security-header">
-        <i class="ti ti-lock security-icon"></i>
-        <div class="security-name">SSL/TLS Management</div>
-      </div>
-      <div class="security-desc">All domains terminate SSL at the NPM layer. Certificates managed via Let's Encrypt with automated renewal. Wildcard certificates for internal subdomains, single-domain certs for public-facing endpoints. Zero-downtime renewal via NPM's built-in cert manager.</div>
-      <span class="security-tag">// Layer: Transport Security · Certificate Lifecycle</span>
-    </div>
-    <div class="security-item">
-      <div class="security-header">
-        <i class="ti ti-topology-ring security-icon"></i>
-        <div class="security-name">KrakenD Auth Validation</div>
-      </div>
-      <div class="security-desc">KrakenD acts as the second security layer after NPM. API routes are protected by token validation at the gateway level — unauthenticated requests are rejected before reaching any microservice. Rate limiting per route prevents abuse from authenticated clients.</div>
-      <span class="security-tag">// Layer: API Security · Auth + Rate Limiting</span>
-    </div>
-  </div>
-</section>
-
-<!-- IMPROVEMENTS MADE -->
-<section>
-  <div class="section-header fade-in">
-    <div class="section-tag">05</div>
-    <h2 class="section-title">Improvements Made</h2>
-  </div>
-  <p class="fade-in" style="font-size:14px;color:var(--gray-600);font-weight:300;line-height:1.8;max-width:680px;margin-bottom:40px">
-    Inheriting infrastructure doesn't mean accepting the status quo. These are the improvements 
-    I implemented after taking ownership — each one reducing operational risk or increasing visibility.
-  </p>
-  <div class="improvements fade-in fade-in-d1">
-    <div class="improvement-item">
-      <div class="improvement-left">
-        <div class="improvement-badge">Monitoring</div>
-        <div class="improvement-area">Full Alerting Pipeline</div>
-      </div>
-      <div class="improvement-right">
-        <div class="improvement-title">Built end-to-end monitoring with Telegram alerting</div>
-        <div class="improvement-body">The inherited setup had basic monitoring but no automated alerting. I built a complete pipeline: Prometheus → Alertmanager → n8n → Telegram, with custom threshold-based rules for all services — clusters, databases, RabbitMQ, and standalone servers. Critical alerts route to dedicated channels; general alerts go to common. Added /check_server slash commands for on-demand health checks.</div>
-      </div>
-    </div>
-    <div class="improvement-item">
-      <div class="improvement-left">
-        <div class="improvement-badge">Security</div>
-        <div class="improvement-area">CrowdSec Integration</div>
-      </div>
-      <div class="improvement-right">
-        <div class="improvement-title">Added behavioral threat detection alongside ModSecurity</div>
-        <div class="improvement-body">ModSecurity was already in place but only inspected request content. I added CrowdSec to complement it with behavioral analysis — detecting patterns across multiple requests from the same source. The NPM bouncer integration means detected threats are blocked at the proxy level without manual intervention.</div>
-      </div>
-    </div>
-    <div class="improvement-item">
-      <div class="improvement-left">
-        <div class="improvement-badge">Database</div>
-        <div class="improvement-area">Backup Automation</div>
-      </div>
-      <div class="improvement-right">
-        <div class="improvement-title">Automated nightly backups with remote storage and retention policy</div>
-        <div class="improvement-body">Database backups were previously manual. I wrote Bash scripts that run nightly via cron — dumping all databases, compressing, and shipping to a remote VPS via SSH key authentication. Retention policy automatically purges backups older than 30 days to manage storage. Backup success/failure alerts via Telegram.</div>
-      </div>
-    </div>
-    <div class="improvement-item">
-      <div class="improvement-left">
-        <div class="improvement-badge">Operations</div>
-        <div class="improvement-area">SSL Lifecycle</div>
-      </div>
-      <div class="improvement-right">
-        <div class="improvement-title">Systematized certificate renewal across 50+ domains</div>
-        <div class="improvement-body">Managing SSL renewals for 50+ domains manually is error-prone. I documented and standardized the renewal process for both wildcard and single-domain certificates — using Certbot DNS challenge for internal services, NPM's built-in manager for public domains, and HAProxy USR2 reload for zero-downtime cert swaps on load balancer endpoints.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- LESSONS LEARNED -->
-<section>
-  <div class="section-header fade-in">
-    <div class="section-tag">06</div>
-    <h2 class="section-title">Lessons Learned</h2>
-  </div>
-  <div class="lessons-list fade-in">
-    <div class="lesson-item">
-      <div class="lesson-num">01</div>
-      <div>
-        <div class="lesson-title">Inheriting infrastructure means inheriting undocumented decisions</div>
-        <div class="lesson-body">Every system has design choices that made sense at the time but aren't documented anywhere. Taking ownership means reverse-engineering why things are set up the way they are before changing anything. I spent the first weeks understanding the architecture before making any modifications — this prevented several potential incidents.</div>
-      </div>
-    </div>
-    <div class="lesson-item">
-      <div class="lesson-num">02</div>
-      <div>
-        <div class="lesson-title">Solo DevOps means monitoring is non-negotiable</div>
-        <div class="lesson-body">When you're the only DevOps engineer, you can't watch dashboards 24/7. Building a reliable alerting pipeline isn't optional — it's the only way to catch issues before they become incidents without burning out. The Telegram alerting pipeline I built became the single most important operational improvement I made.</div>
-      </div>
-    </div>
-    <div class="lesson-item">
-      <div class="lesson-num">03</div>
-      <div>
-        <div class="lesson-title">Standalone services outside Kubernetes are the operational blind spot</div>
-        <div class="lesson-body">Kubernetes workloads are easy to monitor and restart. Standalone servers running MariaDB, MongoDB, RabbitMQ, and MinIO require more attention — they don't self-heal, and issues require manual intervention. Dedicated monitoring for each service and runbooks for common failure scenarios are essential when you're alone on call.</div>
-      </div>
-    </div>
-    <div class="lesson-item">
-      <div class="lesson-num">04</div>
-      <div>
-        <div class="lesson-title">KrakenD config is the most sensitive change in the system</div>
-        <div class="lesson-body">A wrong API gateway config can silently break specific routes without any obvious error. I learned to always test KrakenD config changes in dev first, validate with integration tests in staging, and only then promote to production. The three-cluster setup makes this workflow natural — but it requires discipline to follow every single time.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- BOTTOM NAV -->
-<div class="bottom-nav fade-in">
-  <a href="/" class="btn btn-outline"><i class="ti ti-arrow-left"></i>Back to Portfolio</a>
-  <a href="/case-galera" class="next-case">
-    <span class="next-label">Next Case Study →</span>
-    <span class="next-title">MariaDB Galera Cluster</span>
-  </a>
+<main class="bench">
+<article class="sheet">
+<span class="scr tl"></span><span class="scr tr"></span><span class="scr bl"></span><span class="scr br"></span>
+<div class="sheet-head">
+  <span class="u-tag">PRJ-003</span>
+  <span class="nm">Inherited Infra — Full Ownership</span>
+  <span class="sub">INFRASTRUCTURE OPERATIONS · PULLED FROM RACK-01</span>
+  <span class="led"></span>
 </div>
-
-<footer>
-  <span class="footer-copy">© 2026 Noval Ramdani</span>
-  <div class="footer-links">
-    <a href="/" class="footer-link"><i class="ti ti-user"></i>Portfolio</a>
-    <a href="https://linkedin.com/in/noval-ramdani" target="_blank" class="footer-link"><i class="ti ti-brand-linkedin"></i>LinkedIn</a>
-    <a href="mailto:novalramdani.work@gmail.com" class="footer-link"><i class="ti ti-mail"></i>Email</a>
-  </div>
-</footer>
-
+<div class="vents"></div>
+<header class="hero">
+  <h1 class="stencil">Multi-Cluster<br><span class="o">Operations</span></h1>
+  <div class="meta"><span>3 CLUSTERS</span><span class="sep">·</span><span>KRAKEND API GATEWAY</span><span class="sep">·</span><span>SOLO DEVOPS</span></div>
+  <p class="sum">Took full ownership of an inherited multi-cluster Kubernetes infrastructure as the sole DevOps engineer — operating, maintaining, and improving <strong>three separate RKE2 clusters</strong> plus a stack of standalone database and messaging services. This sheet documents what I operate, how I improved it, and the decisions along the way.</p>
+  <div class="specplate" role="list"><div class="spec"><b>3</b><span>RKE2 clusters</span><small>Dev, staging, production — each isolated, all via Rancher</small></div><div class="spec"><b>Solo</b><span>Full ownership</span><small>Uptime, deployments, incidents, improvement — one person</small></div><div class="spec"><b>3<em>×</em></b><span>KrakenD instances</span><small>One API gateway per cluster, config managed per env</small></div><div class="spec"><b>5</b><span>Standalone DB services</span><small>MariaDB, MongoDB, Redis, RabbitMQ, MinIO</small></div></div>
+</header>
+<section class="panel">
+  <div class="panel-head"><span class="id">REPORT-01</span><h2>Handover Sheet — Context & Ownership</h2><span class="pl"></span></div>
+  <div class="panel-body"><div class="note"><b>HANDOVER CONTEXT:</b> this infrastructure was built before I joined. I inherited it as the sole DevOps engineer and took full operational ownership — uptime, deployments, incident response, and continuous improvement. Details are intentionally generalized for confidentiality.</div><div class="grid3"><div class="card"><b>Cluster management</b><p>Operate and maintain three separate RKE2 clusters through Rancher. Each environment is isolated — dev for active development, staging for pre-release validation, production for live traffic.</p><div class="chips"><span class="chip">RKE2</span><span class="chip">Rancher</span><span class="chip">dev / staging / prod</span></div></div><div class="card"><b>API gateway</b><p>Each cluster runs its own KrakenD instance. All external requests hit Nginx Proxy Manager first, then route through KrakenD before reaching microservices — routing, rate limiting, auth validation.</p><div class="chips"><span class="chip">KrakenD</span><span class="chip">NPM</span><span class="chip">API routing</span></div></div><div class="card"><b>Database operations</b><p>Five standalone database and messaging services outside Kubernetes. MariaDB with 2 masters + 1 replica, MongoDB, Redis, RabbitMQ, MinIO — all on dedicated servers, all managed solo.</p><div class="chips"><span class="chip">MariaDB</span><span class="chip">MongoDB</span><span class="chip">Redis</span><span class="chip">RabbitMQ</span><span class="chip">MinIO</span></div></div><div class="card"><b>Security layer</b><p>ModSecurity (WAF) and CrowdSec (IPS) integrated into the NPM layer — ModSec filters malicious requests at HTTP level, CrowdSec adds behavioral threat detection and automatic IP banning.</p><div class="chips"><span class="chip">ModSecurity</span><span class="chip">CrowdSec</span><span class="chip">NPM</span></div></div><div class="card"><b>CI/CD & deployments</b><p>Manage and improve the deployment pipeline across all three environments — dev and staging auto-deploy, production requires explicit approval before rollout.</p><div class="chips"><span class="chip">Jenkins</span><span class="chip">GitLab CI</span><span class="chip">ArgoCD</span></div></div><div class="card"><b>Monitoring & alerting</b><p>Full coverage across clusters, standalone servers, and databases. Custom alert rules with Telegram on-call integration — all managed and tuned by one person.</p><div class="chips"><span class="chip">Prometheus</span><span class="chip">Grafana</span><span class="chip">Alertmanager</span><span class="chip">Telegram</span></div></div></div></div>
+</section>
+<section class="panel">
+  <div class="panel-head"><span class="id">REPORT-02</span><h2>Schematic — Infrastructure Architecture</h2><span class="pl"></span></div>
+  <div class="panel-body"><p class="lead">All external traffic enters through NPM with ModSecurity and CrowdSec enforcing security at the edge. Requests route to the appropriate <b>KrakenD instance per cluster</b>. Standalone database services sit outside Kubernetes and are shared across clusters based on application needs.</p><div class="schem"><div class="schem-bar">FIG · INFRASTRUCTURE ARCHITECTURE · MULTI-CLUSTER<button type="button" data-replay>REPLAY ▸</button></div><div class="grid"></div><svg viewBox="0 0 940 470" role="img" aria-label="Multi-cluster infrastructure architecture diagram" xmlns="http://www.w3.org/2000/svg"><g class="d" style="--i:1"><rect class="bx" x="400" y="14" width="140" height="32" rx="4" style=""/><text class="t" x="470.0" y="34.0" text-anchor="middle">USER</text></g><path class="w" pathLength="1" d="M470 46 V 66" style="--i:2;stroke:var(--orange)"/><g class="d" style="--i:3"><rect class="bx" x="300" y="66" width="340" height="48" rx="4" style="stroke:var(--pink);"/><text class="t" x="470.0" y="84" text-anchor="middle">Nginx Proxy Manager</text><text class="s" x="470.0" y="98" text-anchor="middle">ModSecurity (WAF) · CrowdSec (IPS)</text></g><path class="w" pathLength="1" d="M380 114 L 176 148" style="--i:4;stroke:var(--orange)"/><path class="w" pathLength="1" d="M470 114 V 148" style="--i:5;stroke:var(--orange)"/><path class="w" pathLength="1" d="M560 114 L 764 148" style="--i:6;stroke:var(--orange)"/><g class="d" style="--i:7"><rect class="bx2" x="40" y="148" width="272" height="132" rx="5" style="stroke:var(--metal-3);stroke-dasharray:5 4"/><text class="lbl" x="50" y="164">DEV CLUSTER · RKE2 · RANCHER</text></g><g class="d" style="--i:8"><rect class="bx" x="64" y="180" width="224" height="38" rx="4" style=""/><text class="t" x="176.0" y="198" text-anchor="middle">KrakenD</text><text class="s" x="176.0" y="212" text-anchor="middle">API gateway</text></g><g class="d" style="--i:9"><rect class="bx" x="64" y="228" width="224" height="38" rx="4" style="stroke:var(--blue);"/><text class="t" x="176.0" y="246" text-anchor="middle">microservices</text><text class="s" x="176.0" y="260" text-anchor="middle">svc-a · svc-b · svc-c</text></g><g class="d" style="--i:10"><rect class="bx2" x="334" y="148" width="272" height="132" rx="5" style="stroke:var(--metal-3);stroke-dasharray:5 4"/><text class="lbl" x="344" y="164">STAGING CLUSTER · RKE2 · RANCHER</text></g><g class="d" style="--i:11"><rect class="bx" x="358" y="180" width="224" height="38" rx="4" style=""/><text class="t" x="470.0" y="198" text-anchor="middle">KrakenD</text><text class="s" x="470.0" y="212" text-anchor="middle">API gateway</text></g><g class="d" style="--i:12"><rect class="bx" x="358" y="228" width="224" height="38" rx="4" style="stroke:var(--blue);"/><text class="t" x="470.0" y="246" text-anchor="middle">microservices</text><text class="s" x="470.0" y="260" text-anchor="middle">svc-a · svc-b · svc-c</text></g><g class="d" style="--i:13"><rect class="bx2" x="628" y="148" width="272" height="132" rx="5" style="stroke:var(--metal-3);stroke-dasharray:5 4"/><text class="lbl" x="638" y="164">PROD CLUSTER · RKE2 · RANCHER</text></g><g class="d" style="--i:14"><rect class="bx" x="652" y="180" width="224" height="38" rx="4" style=""/><text class="t" x="764.0" y="198" text-anchor="middle">KrakenD</text><text class="s" x="764.0" y="212" text-anchor="middle">API gateway</text></g><g class="d" style="--i:15"><rect class="bx" x="652" y="228" width="224" height="38" rx="4" style="stroke:var(--blue);"/><text class="t" x="764.0" y="246" text-anchor="middle">microservices</text><text class="s" x="764.0" y="260" text-anchor="middle">svc-a · svc-b · svc-c</text></g><path class="w" pathLength="1" d="M176 280 V 312" style="--i:16;stroke:var(--green)"/><path class="w" pathLength="1" d="M470 280 V 312" style="--i:17;stroke:var(--green)"/><path class="w" pathLength="1" d="M764 280 L 700 312" style="--i:18;stroke:var(--green)"/><g class="d" style="--i:19"><rect class="bx2" x="40" y="312" width="566" height="84" rx="5" style="stroke:var(--metal-3);stroke-dasharray:5 4"/><text class="lbl" x="50" y="328">STANDALONE DATABASE SERVERS</text></g><g class="d" style="--i:20"><rect class="bx" x="58" y="342" width="96" height="44" rx="4" style=""/><text class="t" x="106.0" y="360" text-anchor="middle">MariaDB</text><text class="s" x="106.0" y="374" text-anchor="middle">2M + 1R</text></g><g class="d" style="--i:21"><rect class="bx" x="168" y="342" width="96" height="44" rx="4" style=""/><text class="t" x="216.0" y="360" text-anchor="middle">MongoDB</text><text class="s" x="216.0" y="374" text-anchor="middle">standalone</text></g><g class="d" style="--i:22"><rect class="bx" x="278" y="342" width="96" height="44" rx="4" style=""/><text class="t" x="326.0" y="360" text-anchor="middle">Redis</text><text class="s" x="326.0" y="374" text-anchor="middle">cache</text></g><g class="d" style="--i:23"><rect class="bx" x="388" y="342" width="96" height="44" rx="4" style=""/><text class="t" x="436.0" y="360" text-anchor="middle">RabbitMQ</text><text class="s" x="436.0" y="374" text-anchor="middle">messaging</text></g><g class="d" style="--i:24"><rect class="bx" x="498" y="342" width="96" height="44" rx="4" style=""/><text class="t" x="546.0" y="360" text-anchor="middle">MinIO</text><text class="s" x="546.0" y="374" text-anchor="middle">objects</text></g><g class="d" style="--i:25"><rect class="bx" x="632" y="312" width="268" height="84" rx="4" style="stroke:var(--amber);stroke-dasharray:4 3;"/><text class="t" x="766.0" y="330" text-anchor="middle">MONITORING · ALERTING</text><text class="s" x="766.0" y="344" text-anchor="middle">Prometheus · Grafana · Alertmanager</text><text class="s" x="766.0" y="356" text-anchor="middle">n8n · Telegram bot</text></g><path class="w" pathLength="1" d="M632 354 H 606" style="--i:26;stroke:var(--amber)"/></svg></div></div>
+</section>
+<section class="panel">
+  <div class="panel-head"><span class="id">REPORT-03</span><h2>Components — What I Operate</h2><span class="pl"></span></div>
+  <div class="panel-body"><div class="flow"><div class="step"><span class="n">01</span><div><b>3 × RKE2 Kubernetes clusters via Rancher</b><p>Dev, staging, production — each isolated, each managed through Rancher. Node health, workload scheduling, resource quotas, rolling deployments. Production runs live traffic; dev and staging auto-deploy on push.</p></div></div><div class="step"><span class="n">02</span><div><b>KrakenD API Gateway — per cluster</b><p>Three separate instances, one per cluster. Every external API call passes through KrakenD before any microservice. Gateway config management — routes, rate limits, auth validation, timeout policies — with changes validated per environment before promotion.</p></div></div><div class="step"><span class="n">03</span><div><b>Nginx Proxy Manager + ModSecurity + CrowdSec</b><p>NPM is the single entry point. ModSecurity inspects and blocks malicious HTTP requests at the edge; CrowdSec adds behavioral analysis with automatic banning. Managing security rules and bouncer lists is an active responsibility.</p></div></div><div class="step"><span class="n">04</span><div><b>MariaDB — 2 masters + 1 replica</b><p>Two master nodes serving different application domains, both replicating to a single replica that acts as full backup. Replication health monitoring, backup schedules, privilege management, manual failover when needed.</p></div></div><div class="step"><span class="n">05</span><div><b>Standalone: MongoDB · Redis · RabbitMQ · MinIO</b><p>Four additional services on dedicated servers outside Kubernetes — document storage, cache/session, async messaging, object storage. All inherited; monitoring, patching, and availability are my responsibility.</p></div></div></div></div>
+</section>
+<section class="panel">
+  <div class="panel-head"><span class="id">REPORT-04</span><h2>Shield Plate — Security Layer</h2><span class="pl"></span></div>
+  <div class="panel-body"><div class="grid2"><div class="card"><b>ModSecurity (WAF)</b><p>Integrated into NPM, inspecting every incoming HTTP request against the OWASP Core Rule Set — blocking SQL injection, XSS, path traversal, and other common patterns before they reach any application layer. Detection + blocking mode in production.</p><span class="ft">// HTTP INSPECTION · OWASP CRS</span></div><div class="card"><b>CrowdSec (IPS)</b><p>Behavioral intrusion prevention alongside NPM — analyzes access logs in real time and automatically bans IPs exhibiting attack behavior (brute force, scanning, probing) via the NPM bouncer. Shares threat intel with the CrowdSec community network.</p><span class="ft">// BEHAVIORAL ANALYSIS · IP REPUTATION</span></div><div class="card"><b>SSL/TLS management</b><p>All domains terminate SSL at NPM. Let's Encrypt with automated renewal — wildcard certs for internal subdomains, single-domain certs for public endpoints, zero-downtime renewal via NPM's cert manager.</p><span class="ft">// TRANSPORT SECURITY · CERT LIFECYCLE</span></div><div class="card"><b>KrakenD auth validation</b><p>The second security layer after NPM. API routes protected by token validation at the gateway — unauthenticated requests rejected before reaching any microservice, per-route rate limiting against abuse.</p><span class="ft">// API SECURITY · AUTH + RATE LIMITING</span></div></div></div>
+</section>
+<section class="panel">
+  <div class="panel-head"><span class="id">REPORT-05</span><h2>Upgrade Log — Improvements Made</h2><span class="pl"></span></div>
+  <div class="panel-body"><p class="lead">Inheriting infrastructure doesn't mean accepting the status quo. Each improvement below reduced operational risk or increased visibility.</p><div class="grid2"><div class="card"><b>Built end-to-end monitoring with Telegram alerting</b><p>The inherited setup had basic monitoring but no automated alerting. I built the complete pipeline: Prometheus → Alertmanager → n8n → Telegram, with custom threshold rules for clusters, databases, RabbitMQ, and standalone servers. Critical alerts route to dedicated channels, plus /check_server slash commands for on-demand health checks.</p><span class="ft">// MONITORING · FULL ALERTING PIPELINE</span></div><div class="card"><b>Added CrowdSec behavioral threat detection</b><p>ModSecurity only inspected request content. CrowdSec complements it with behavioral analysis — detecting patterns across multiple requests from one source. The NPM bouncer integration blocks detected threats at the proxy with no manual intervention.</p><span class="ft">// SECURITY · CROWDSEC INTEGRATION</span></div><div class="card"><b>Automated nightly backups with remote storage</b><p>Backups were manual before. Bash scripts now run nightly via cron — dumping all databases, compressing, and shipping to a remote VPS over SSH key auth. A 30-day retention policy purges old backups automatically; success/failure alerts go to Telegram.</p><span class="ft">// DATABASE · BACKUP AUTOMATION</span></div><div class="card"><b>Systematized SSL renewal across 50+ domains</b><p>Manual renewal across 50+ domains is error-prone. I documented and standardized the process — Certbot DNS challenge for internal services, NPM's manager for public domains, and HAProxy USR2 reload for zero-downtime cert swaps on load balancer endpoints.</p><span class="ft">// OPERATIONS · SSL LIFECYCLE</span></div></div></div>
+</section>
+<section class="panel">
+  <div class="panel-head"><span class="id">REPORT-06</span><h2>Maintenance Log — Lessons Learned</h2><span class="pl"></span></div>
+  <div class="panel-body"><div class="sop-item"><b>LL-1</b><div><strong>Inheriting infrastructure means inheriting undocumented decisions</strong><span>Every system has design choices that made sense at the time but aren't written down anywhere. I spent the first weeks reverse-engineering why things were set up the way they were before changing anything — which prevented several potential incidents.</span></div></div><div class="sop-item"><b>LL-2</b><div><strong>Solo DevOps means monitoring is non-negotiable</strong><span>You can't watch dashboards 24/7 alone. A reliable alerting pipeline is the only way to catch issues before they become incidents without burning out. The Telegram pipeline became the single most important operational improvement I made.</span></div></div><div class="sop-item"><b>LL-3</b><div><strong>Standalone services outside Kubernetes are the operational blind spot</strong><span>Kubernetes workloads are easy to monitor and restart. Standalone MariaDB, MongoDB, RabbitMQ, and MinIO don't self-heal — dedicated monitoring per service and runbooks for common failures are essential when you're alone on call.</span></div></div><div class="sop-item"><b>LL-4</b><div><strong>KrakenD config is the most sensitive change in the system</strong><span>A wrong gateway config can silently break specific routes with no obvious error. Test in dev, validate with integration tests in staging, only then promote to production — every single time.</span></div></div></div>
+</section><nav class="casenav" aria-label="Case studies"><a href="/case-huawei"><span style="color:var(--orange);font-family:var(--d-mono)">◂</span><div><div class="dir">PRJ-002 · PREV DRAWER</div><div class="ttl">Huawei Cloud Migration</div></div></a><a class="next" href="/case-galera"><div><div class="dir">PRJ-004 · NEXT DRAWER</div><div class="ttl">MariaDB Galera Cluster</div></div><span style="color:var(--orange);font-family:var(--d-mono)">▸</span></a></nav>
+</article>
+</main>
+<footer>© 2026 NOVAL RAMDANI · <a href="/">RACK-01</a> · <a href="https://linkedin.com/in/noval-ramdani" target="_blank" rel="noopener">LINKEDIN</a> · <a href="mailto:novalramdani.work@gmail.com">EMAIL</a></footer>
 <script>
-const cursor=document.getElementById('cursor'),ring=document.getElementById('cursorRing');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
-function animateCursor(){
-  cursor.style.left=mx+'px';cursor.style.top=my+'px';
-  rx+=(mx-rx)*.12;ry+=(my-ry)*.12;
-  ring.style.left=rx+'px';ring.style.top=ry+'px';
-  requestAnimationFrame(animateCursor);
+(function(){
+var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var panels=document.querySelectorAll('.panel');
+if('IntersectionObserver' in window && !reduced){
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.isIntersecting){e.target.classList.add('on');
+      var s=e.target.querySelector('.schem');if(s)s.classList.add('go');
+      io.unobserve(e.target);}});},{threshold:0.1});
+  panels.forEach(function(p){io.observe(p);});
+}else{
+  panels.forEach(function(p){p.classList.add('on');});
+  document.querySelectorAll('.schem').forEach(function(s){s.classList.add('go');});
 }
-animateCursor();
-document.querySelectorAll('a,button,.stat-box,.resp-card,.security-item,.ops-item,.lesson-item,.improvement-item,.cluster-card').forEach(el=>{
-  el.addEventListener('mouseenter',()=>{cursor.classList.add('hovered');ring.classList.add('hovered')});
-  el.addEventListener('mouseleave',()=>{cursor.classList.remove('hovered');ring.classList.remove('hovered')});
+document.querySelectorAll('[data-replay]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var s=b.closest('.schem');s.classList.remove('go');
+    void s.offsetWidth;s.classList.add('go');
+  });
 });
-
-const observer=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
-},{threshold:.08});
-document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
-
-// Arch animation
-const steps=['s1','s2','s3-dev','s3-staging','s3-prod','s4','s5'];
-const initT={'s1':'translate(0,-8)','s2':'translate(0,-6)','s3-dev':'translate(-8,0)','s3-prod':'translate(8,0)','s4':'translate(0,8)','s5':'translate(0,6)'};
-
-function animEl(id){
-  return new Promise(resolve=>{
-    const el=document.getElementById(id);
-    if(!el){resolve();return}
-    el.style.transition='opacity .55s ease, transform .55s ease';
-    el.style.opacity='1';
-    el.style.transform='translate(0,0)';
-    setTimeout(resolve,600);
-  });
-}
-
-async function runArchAnim(){
-  steps.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){el.style.transition='none';el.style.opacity='0';el.style.transform=initT[id]||''}
-  });
-  await new Promise(r=>setTimeout(r,100));
-  for(const id of steps) await animEl(id);
-}
-
-const archObs=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){setTimeout(runArchAnim,400);archObs.unobserve(e.target)}
-  });
-},{threshold:0.2});
-const archEl=document.getElementById('archContainer');
-if(archEl)archObs.observe(archEl);
+})();
 </script>
 </body>
 </html>
