@@ -3,261 +3,292 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>On-Premise → Huawei Cloud — Noval Ramdani</title>
-<meta name="description" content="Case study: full cloud migration architecture to Huawei Cloud — CCE dual-region, managed RDS/DMS/DCS, WireGuard bridge, phased rollout.">
-<meta name="author" content="Noval Ramdani">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='3' width='24' height='26' rx='2' fill='%231b1e22' stroke='%23f25c05' stroke-width='2'/><rect x='8' y='7' width='16' height='4' rx='1' fill='%23f25c05'/><rect x='8' y='14' width='16' height='4' rx='1' fill='%233ddc84'/><rect x='8' y='21' width='16' height='4' rx='1' fill='%234dabf7'/></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:opsz,wght@10..72,600;10..72,700&family=Archivo:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--room:#0c0e10;--rack:#14171a;--metal:#1b1f23;--metal-2:#22262b;--metal-3:#2a2f35;
---steel:#383f46;--steel-2:#4a525a;--ink:#eef1f4;--dim:#97a0a9;--faint:#5d656d;
---orange:#f25c05;--orange-2:#ff7a2e;--green:#3ddc84;--amber:#ffc24b;--blue:#4dabf7;
---yellow:#ffd43b;--pink:#ff8787;--sticker:#efece4;
---d-disp:'Big Shoulders',sans-serif;--d-body:'Archivo',sans-serif;--d-mono:'IBM Plex Mono',monospace}
-html{scroll-behavior:smooth}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
-body{font-family:var(--d-body);background:var(--room);color:var(--ink);font-size:15px;line-height:1.65;overflow-x:hidden}
-::selection{background:var(--orange);color:#0c0e10}
-a{color:inherit}
-:focus-visible{outline:2px solid var(--orange);outline-offset:3px;border-radius:2px}
-body::before{content:'';position:fixed;inset:0;z-index:-1;
-background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
-background-size:56px 56px}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
-
-/* topbar */
-.topbar{position:sticky;top:0;z-index:90;display:flex;align-items:center;gap:14px;
-background:rgba(12,14,16,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--metal-3);
-padding:11px 20px;font-family:var(--d-mono);font-size:11px}
-.topbar .back{color:var(--dim);text-decoration:none;letter-spacing:.08em;white-space:nowrap;transition:color .2s}
-.topbar .back:hover{color:var(--orange)}
-.topbar .crumb{color:var(--faint);letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.topbar .crumb b{color:var(--ink);font-weight:500}
-.topbar .mode{margin-left:auto;color:var(--faint);letter-spacing:.12em;white-space:nowrap;display:flex;align-items:center;gap:8px}
-.topbar .mode i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(61,220,132,.8);animation:blink 2.4s infinite}
-.topbar .mode i.amb{background:var(--amber);box-shadow:0 0 8px rgba(255,194,75,.8)}
-
-/* workbench + pulled unit */
-.bench{max-width:1080px;margin:0 auto;padding:30px 22px 60px}
-.sheet{position:relative;background:linear-gradient(180deg,var(--metal-2) 0%,var(--metal) 12%,var(--metal) 88%,#171a1e 100%);
-border:1px solid var(--steel);border-radius:6px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
-.scr{position:absolute;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#555d66,#23272c 70%);border:1px solid #0b0d0f;z-index:2}
-.scr::before{content:'';position:absolute;left:1px;right:1px;top:50%;height:1px;background:#0b0d0f;transform:rotate(38deg)}
-.scr.tl{top:7px;left:8px}.scr.tr{top:7px;right:8px}.scr.bl{bottom:7px;left:8px}.scr.br{bottom:7px;right:8px}
-.sheet-head{display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid var(--metal-3);flex-wrap:wrap}
-.u-tag{font-family:var(--d-mono);font-size:10px;letter-spacing:.1em;color:var(--faint);background:#101316;border:1px solid var(--metal-3);padding:3px 8px;border-radius:3px;white-space:nowrap}
-.sheet-head .nm{font-family:var(--d-disp);font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
-.sheet-head .sub{font-family:var(--d-mono);font-size:10px;color:var(--faint);margin-left:auto;letter-spacing:.08em}
-.led{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 9px rgba(61,220,132,.7);flex-shrink:0}
-.led.amb{background:var(--amber);box-shadow:0 0 9px rgba(255,194,75,.7);animation:blink 1.8s infinite}
-.vents{height:10px;margin:0 28px;background-image:radial-gradient(circle,#0c0e10 1.6px,transparent 1.9px);background-size:9px 9px;background-position:center;opacity:.85}
-
-/* hero */
-.hero{padding:30px 28px 28px}
-.hero .stencil{font-family:var(--d-disp);font-weight:700;font-size:clamp(38px,6vw,76px);line-height:.96;letter-spacing:.035em;text-transform:uppercase}
-.hero .stencil .o{color:transparent;-webkit-text-stroke:1.4px var(--steel-2)}
-.hero .meta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:16px 0 4px;font-family:var(--d-mono);font-size:11.5px;color:var(--dim)}
-.hero .meta .sep{color:var(--faint)}
-.badge{font-family:var(--d-mono);font-size:10px;letter-spacing:.08em;padding:3px 9px;border-radius:3px;border:1px solid rgba(255,194,75,.45);color:var(--amber)}
-.hero .sum{max-width:680px;color:var(--dim);font-size:15px;margin-top:12px}
-.hero .sum strong{color:var(--ink);font-weight:500}
-.specplate{margin-top:24px;border:1px solid var(--steel);border-radius:4px;background:#101316;display:grid;grid-template-columns:repeat(4,1fr)}
-.spec{padding:15px 17px 13px;border-right:1px solid var(--metal-3)}
-.spec:last-child{border-right:0}
-.spec b{display:block;font-family:var(--d-disp);font-weight:600;font-size:30px;letter-spacing:.03em;line-height:1}
-.spec b em{font-style:normal;color:var(--orange)}
-.spec span{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;display:block;margin-top:7px}
-.spec small{display:block;font-size:11px;color:var(--dim);margin-top:4px;line-height:1.45}
-
-/* panels */
-.panel{margin:0 28px 26px;border:1px solid var(--metal-3);border-radius:5px;background:#181c20;
-opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease}
-.panel.on{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){.panel{opacity:1;transform:none}}
-.panel-head{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px dashed var(--metal-3);flex-wrap:wrap}
-.panel-head .id{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.12em;color:var(--orange)}
-.panel-head h2{font-family:var(--d-disp);font-weight:600;font-size:19px;letter-spacing:.06em;text-transform:uppercase}
-.panel-head .pl{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#34393f;transition:background .4s,box-shadow .4s}
-.panel.on .pl{background:var(--green);box-shadow:0 0 8px rgba(61,220,132,.7)}
-.panel-body{padding:20px}
-.panel-body>p.lead{color:var(--dim);font-size:14px;max-width:760px;margin-bottom:16px}
-.panel-body>p.lead b{color:var(--ink);font-weight:500}
-.quote{font-family:var(--d-disp);font-weight:600;font-size:clamp(19px,2.6vw,26px);letter-spacing:.03em;line-height:1.25;
-border-left:3px solid var(--orange);padding:4px 0 4px 16px;margin-bottom:16px;max-width:780px}
-.note{border:1px dashed var(--steel);border-radius:4px;padding:12px 16px;font-size:13px;color:var(--dim);margin-bottom:16px}
-.note b{color:var(--amber);font-weight:500;font-family:var(--d-mono);font-size:11px;letter-spacing:.08em}
-
-/* fault cards */
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.fault{border:1px solid var(--metal-3);border-radius:4px;background:var(--metal);padding:14px 16px;position:relative}
-.fault::before{content:'FAULT';position:absolute;top:10px;right:12px;font-family:var(--d-mono);font-size:8.5px;letter-spacing:.14em;color:var(--amber);opacity:.85}
-.fault b{display:block;font-weight:500;font-size:14px;margin-bottom:5px;padding-right:48px}
-.fault p{color:var(--dim);font-size:12.5px}
-.card{border:1px solid var(--metal-3);border-radius:4px;background:var(--metal);padding:14px 16px;display:flex;flex-direction:column;gap:7px}
-.card b{font-weight:500;font-size:14px}
-.card p{color:var(--dim);font-size:12.5px;flex:1}
-.card .ft{font-family:var(--d-mono);font-size:9.5px;color:var(--faint);letter-spacing:.06em}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{font-family:var(--d-mono);font-size:10px;color:var(--dim);border:1px solid var(--metal-3);border-radius:3px;padding:2px 7px}
-.chip.hot{color:var(--orange);border-color:rgba(242,92,5,.4)}
-
-/* schematic */
-.schem{border:1px solid var(--steel);border-radius:5px;background:#101316;position:relative;overflow:hidden}
-.schem .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:28px 28px;pointer-events:none}
-.schem svg{display:block;width:100%;height:auto;position:relative}
-.schem-bar{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--metal-3);font-family:var(--d-mono);font-size:10px;color:var(--faint);letter-spacing:.1em}
-.schem-bar button{margin-left:auto;font-family:var(--d-mono);font-size:10px;letter-spacing:.1em;color:var(--dim);background:var(--metal-2);border:1px solid var(--steel);border-radius:3px;padding:4px 10px;cursor:pointer;transition:color .2s,border-color .2s}
-.schem-bar button:hover{color:var(--orange);border-color:var(--orange)}
-svg text{font-family:var(--d-mono)}
-svg .bx{fill:var(--metal-2);stroke:var(--steel);stroke-width:1}
-svg .bx2{fill:#161a1e;stroke:var(--metal-3);stroke-width:1}
-svg .t{fill:var(--ink);font-size:11px;font-weight:500}
-svg .s{fill:var(--dim);font-size:9px}
-svg .lbl{fill:var(--faint);font-size:8.5px;letter-spacing:.14em}
-svg .w{fill:none;stroke-width:1.4}
-.schem .d{opacity:0}
-.schem .w{stroke-dasharray:1;stroke-dashoffset:1}
-.schem.go .d{animation:dpop .45s ease both;animation-delay:calc(var(--i)*.08s)}
-.schem.go .w{animation:draw .5s ease both;animation-delay:calc(var(--i)*.08s)}
-@keyframes dpop{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-@keyframes draw{to{stroke-dashoffset:0}}
-@media (prefers-reduced-motion:reduce){.schem .d{opacity:1}.schem .w{stroke-dashoffset:0}}
-.schem-notes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-
-/* flow steps */
-.flow{display:grid;gap:10px}
-.step{display:grid;grid-template-columns:46px 1fr;gap:14px;border:1px solid var(--metal-3);border-radius:4px;background:var(--metal);padding:13px 16px}
-.step .n{font-family:var(--d-mono);font-size:12px;color:var(--orange);padding-top:2px}
-.step b{display:block;font-weight:500;font-size:14px;margin-bottom:3px}
-.step b small{font-family:var(--d-mono);font-size:10px;font-weight:400;color:var(--faint);letter-spacing:.06em;margin-left:8px}
-.step p{color:var(--dim);font-size:12.5px}
-.step ul{list-style:none;margin-top:7px}
-.step li{color:var(--dim);font-size:12.5px;padding:2px 0 2px 16px;position:relative}
-.step li::before{content:'▸';position:absolute;left:0;color:var(--orange);font-size:10px}
-
-/* lessons */
-.sop-item{display:grid;grid-template-columns:52px 1fr;gap:14px;padding:13px 0;border-top:1px dashed var(--metal-3)}
-.sop-item:first-child{border-top:0}
-.sop-item b{font-family:var(--d-mono);font-size:11px;color:var(--orange);font-weight:500;padding-top:2px}
-.sop-item strong{display:block;color:var(--ink);font-weight:500;font-size:14.5px;margin-bottom:3px}
-.sop-item span{color:var(--dim);font-size:13px}
-
-/* tables */
-.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
-.tbl th{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;text-align:left;font-weight:400;padding:7px 10px;border-bottom:1px solid var(--steel)}
-.tbl td{padding:9px 10px;border-bottom:1px dashed var(--metal-3);color:var(--dim);vertical-align:top}
-.tbl td:first-child{color:var(--ink)}
-.tbl tr:last-child td{border-bottom:0}
-.sev{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.08em;padding:2px 8px;border-radius:3px;border:1px solid;white-space:nowrap}
-.sev.hi{color:var(--pink);border-color:rgba(255,135,135,.4)}
-.sev.md{color:var(--amber);border-color:rgba(255,194,75,.4)}
-.sev.lo{color:var(--blue);border-color:rgba(77,171,247,.4)}
-.tbl td.arrow{color:var(--orange);font-family:var(--d-mono);white-space:nowrap}
-.cmd{font-family:var(--d-mono);font-size:12px;color:var(--green)}
-
-/* footer nav */
-.casenav{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 28px 28px}
-.casenav a{display:flex;align-items:center;gap:14px;border:1px solid var(--steel);border-radius:4px;background:linear-gradient(180deg,var(--metal-2),var(--metal));padding:14px 18px;text-decoration:none;transition:border-color .25s,transform .15s}
-.casenav a:hover{border-color:var(--orange);transform:translateY(-2px)}
-.casenav .dir{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.12em;color:var(--faint)}
-.casenav .ttl{font-family:var(--d-disp);font-weight:600;font-size:16px;letter-spacing:.05em;text-transform:uppercase}
-.casenav a.next{justify-content:flex-end;text-align:right}
-footer{text-align:center;padding:8px 16px 26px;font-family:var(--d-mono);font-size:10px;color:var(--faint);letter-spacing:.08em}
-footer a{color:var(--dim)}
-
-@media (max-width:760px){
-.bench{padding:18px 10px 44px}
-.hero{padding:22px 16px}
-.panel{margin:0 16px 20px}
-.panel-body{padding:16px 14px}
-.sheet-head{padding:12px 16px}
-.vents{margin:0 16px}
-.specplate{grid-template-columns:1fr 1fr}
-.spec:nth-child(2){border-right:0}
-.spec:nth-child(1),.spec:nth-child(2){border-bottom:1px solid var(--metal-3)}
-.grid2,.grid3,.schem-notes{grid-template-columns:1fr}
-.casenav{grid-template-columns:1fr;margin:0 16px 22px}
-.topbar{padding:10px 12px;gap:10px}
-.topbar .mode span{display:none}
-.tblwrap{overflow-x:auto}
-.tbl{min-width:560px}
-}
-</style>
+<title>On-premise to Huawei Cloud — Noval Ramdani</title>
+<meta name="description" content="Case study: moving a government platform from its data center to Huawei Cloud as the sole DevOps engineer. Architecture, data sync over a lossy link, incidents, and the cutover plan.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://noval-dev.vercel.app/case-huawei/">
+<meta property="og:title" content="On-premise to Huawei Cloud — case study by Noval Ramdani">
+<meta property="og:description" content="50+ services, a custom binlog sync over a link that drops packets, and a cutover planned with a way back.">
+<meta property="og:image" content="https://noval-dev.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#eef1f0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23ffcd1c'/><path d='M8 23V9h3l6 9V9h3v14h-3l-6-9v9z' fill='%2316202a'/></svg>">
+<link rel="preload" href="../assets/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
-<nav class="topbar" aria-label="Case study navigation">
-  <a class="back" href="/">◂ RETURN UNIT TO RACK-01</a>
-  <span class="crumb">/ <b>PRJ-002</b> · HUAWEI CLOUD MIGRATION</span>
-  <span class="mode"><span>DESIGN PHASE</span> <i class="amb"></i></span>
-</nav>
-<main class="bench">
-<article class="sheet">
-<span class="scr tl"></span><span class="scr tr"></span><span class="scr bl"></span><span class="scr br"></span>
-<div class="sheet-head">
-  <span class="u-tag">PRJ-002</span>
-  <span class="nm">On-Premise → Huawei Cloud</span>
-  <span class="sub">CLOUD ARCHITECTURE DESIGN · PULLED FROM RACK-01</span>
-  <span class="led amb"></span>
-</div>
-<div class="vents"></div>
-<header class="hero">
-  <h1 class="stencil">On-Premise<br><span class="o">→ Huawei Cloud</span></h1>
-  <div class="meta"><span>PHASED MIGRATION</span><span class="sep">·</span><span>ZERO DATA LOSS</span><span class="sep">·</span><span>PARALLEL RUNNING</span> <span class="badge">ARCHITECTURE DESIGN PHASE — IMPLEMENTATION PLANNED</span></div>
-  <p class="sum">As the sole DevOps engineer, I designed the full cloud migration architecture for moving an enterprise platform from on-premise infrastructure to Huawei Cloud. This sheet documents the <strong>target architecture, migration strategy, service mapping, and risk register</strong> — all designed independently from the ground up.</p>
-  <div class="specplate" role="list"><div class="spec"><b>Solo</b><span>DevOps</span><small>Full ownership of design and planned execution</small></div><div class="spec"><b>2</b><span>CCE regions</span><small>Korea + Indonesia node pools</small></div><div class="spec"><b>8<em>+</em></b><span>Services to migrate</span><small>Compute, databases, messaging, cache, storage</small></div><div class="spec"><b>3</b><span>Migration phases</span><small>Setup → parallel running → cutover & decom</small></div></div>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="site-name" href="../index.html">Noval Ramdani</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#experience">Experience</a>
+      <a href="../index.html#contact">Contact</a>
+    </nav>
+  </div>
 </header>
-<section class="panel">
-  <div class="panel-head"><span class="id">REPORT-01</span><h2>Fault Log — Current Infrastructure & Pain Points</h2><span class="pl"></span></div>
-  <div class="panel-body"><div class="note"><b>CONTEXT:</b> this migration was designed for the production infrastructure I inherited and operate as sole DevOps. The existing setup works but has scaling and operational limitations. Infrastructure details are intentionally generalized for confidentiality.</div><div class="grid2"><div class="fault"><b>Fixed on-premise capacity</b><p>Physical servers with fixed capacity. Scaling up requires hardware procurement — slow, expensive, and misaligned with dynamic workload demands.</p></div><div class="fault"><b>Manual database operations</b><p>Standalone MariaDB, MongoDB, Redis, RabbitMQ, and MinIO servers need manual maintenance, patching, and failover. No automated backup or point-in-time recovery.</p></div><div class="fault"><b>Single point of operational dependency</b><p>As the only DevOps engineer, managing multiple standalone services across dev/staging/prod is operationally heavy. Managed services would drastically cut this overhead.</p></div><div class="fault"><b>No disaster recovery strategy</b><p>No geographic redundancy — a datacenter issue would take down all environments with no automatic failover path.</p></div></div><div class="note" style="margin:14px 0 0"><b>CURRENT STACK:</b> Nginx Proxy Manager (entry) · ModSecurity + CrowdSec (WAF/IPS) · KrakenD ×3 · RKE2 + Rancher (dev/staging/prod) · MariaDB ×3 (2 master + 1 replica) · MongoDB · Redis · RabbitMQ · MinIO — all standalone.</div></div>
-</section>
-<section class="panel">
-  <div class="panel-head"><span class="id">REPORT-02</span><h2>Schematic — Target Architecture</h2><span class="pl"></span></div>
-  <div class="panel-body"><p class="lead">All stateful services move to Huawei managed offerings — databases to <b>RDS</b>, messaging to <b>DMS</b>, cache to <b>DCS</b>, storage to <b>OBS</b>. Compute runs in CCE with separate node pools per region. A WireGuard tunnel maintains on-premise connectivity during the parallel running phase.</p><div class="schem"><div class="schem-bar">FIG · TARGET ARCHITECTURE · HUAWEI CLOUD — DESIGNED BY NOVAL RAMDANI<button type="button" data-replay>REPLAY ▸</button></div><div class="grid"></div><svg viewBox="0 0 940 560" role="img" aria-label="Huawei Cloud target architecture diagram" xmlns="http://www.w3.org/2000/svg"><g class="d" style="--i:1"><rect class="bx" x="400" y="14" width="140" height="34" rx="4" style=""/><text class="t" x="470.0" y="35.0" text-anchor="middle">USER</text></g><path class="w" pathLength="1" d="M470 48 V 70" style="--i:2;stroke:var(--orange)"/><g class="d" style="--i:3"><rect class="bx" x="330" y="70" width="280" height="40" rx="4" style="stroke:var(--pink);"/><text class="t" x="470.0" y="94.0" text-anchor="middle">DNS · WAF · Public IP</text></g><path class="w" pathLength="1" d="M400 110 L 280 140" style="--i:4;stroke:var(--orange)"/><path class="w" pathLength="1" d="M540 110 L 660 140" style="--i:5;stroke:var(--orange)"/><g class="d" style="--i:6"><rect class="bx" x="160" y="140" width="240" height="38" rx="4" style=""/><text class="t" x="280.0" y="163.0" text-anchor="middle">ELB · Load Balancer KR</text></g><g class="d" style="--i:7"><rect class="bx" x="540" y="140" width="240" height="38" rx="4" style=""/><text class="t" x="660.0" y="163.0" text-anchor="middle">ELB · Load Balancer INA</text></g><g class="d" style="--i:8"><rect class="bx2" x="50" y="200" width="840" height="120" rx="5" style="stroke:var(--metal-3);stroke-dasharray:5 4"/><text class="lbl" x="60" y="216">CCE CLUSTER · KUBERNETES + NIC + CERT MANAGER</text></g><path class="w" pathLength="1" d="M280 178 V 232" style="--i:9;stroke:var(--orange)"/><path class="w" pathLength="1" d="M660 178 V 232" style="--i:10;stroke:var(--orange)"/><g class="d" style="--i:11"><rect class="bx" x="74" y="232" width="240" height="70" rx="4" style="stroke:var(--blue);"/><text class="t" x="194.0" y="250" text-anchor="middle">namespace: prod-kr</text><text class="s" x="194.0" y="264" text-anchor="middle">KrakenD · svc-01 · web-01</text></g><g class="d" style="--i:12"><rect class="bx" x="348" y="232" width="230" height="70" rx="4" style=""/><text class="t" x="463.0" y="250" text-anchor="middle">namespace: temporal</text><text class="s" x="463.0" y="264" text-anchor="middle">temporal · temporal-ui</text></g><g class="d" style="--i:13"><rect class="bx" x="612" y="232" width="240" height="70" rx="4" style="stroke:var(--blue);"/><text class="t" x="732.0" y="250" text-anchor="middle">namespace: prod-ina</text><text class="s" x="732.0" y="264" text-anchor="middle">KrakenD · ina-svc · ina-web</text></g><path class="w" pathLength="1" d="M470 320 V 348" style="--i:14;stroke:var(--green)"/><g class="d" style="--i:15"><rect class="bx2" x="50" y="348" width="840" height="84" rx="5" style="stroke:var(--metal-3);stroke-dasharray:5 4"/><text class="lbl" x="60" y="364">MANAGED SERVICES</text></g><g class="d" style="--i:16"><rect class="bx" x="70" y="378" width="104" height="44" rx="4" style=""/><text class="t" x="122.0" y="396" text-anchor="middle">RDS KR</text><text class="s" x="122.0" y="410" text-anchor="middle">MariaDB</text></g><g class="d" style="--i:17"><rect class="bx" x="186" y="378" width="104" height="44" rx="4" style=""/><text class="t" x="238.0" y="396" text-anchor="middle">RDS INA</text><text class="s" x="238.0" y="410" text-anchor="middle">MariaDB</text></g><g class="d" style="--i:18"><rect class="bx" x="302" y="378" width="104" height="44" rx="4" style=""/><text class="t" x="354.0" y="396" text-anchor="middle">DDS</text><text class="s" x="354.0" y="410" text-anchor="middle">MongoDB</text></g><g class="d" style="--i:19"><rect class="bx" x="418" y="378" width="104" height="44" rx="4" style=""/><text class="t" x="470.0" y="396" text-anchor="middle">DCS</text><text class="s" x="470.0" y="410" text-anchor="middle">Redis</text></g><g class="d" style="--i:20"><rect class="bx" x="534" y="378" width="104" height="44" rx="4" style=""/><text class="t" x="586.0" y="396" text-anchor="middle">DMS</text><text class="s" x="586.0" y="410" text-anchor="middle">RabbitMQ</text></g><g class="d" style="--i:21"><rect class="bx" x="650" y="378" width="104" height="44" rx="4" style=""/><text class="t" x="702.0" y="396" text-anchor="middle">OBS</text><text class="s" x="702.0" y="410" text-anchor="middle">storage</text></g><g class="d" style="--i:22"><rect class="bx" x="766" y="378" width="104" height="44" rx="4" style=""/><text class="t" x="818.0" y="396" text-anchor="middle">SWR</text><text class="s" x="818.0" y="410" text-anchor="middle">registry</text></g><g class="d" style="--i:23"><rect class="bx2" x="50" y="458" width="430" height="78" rx="5" style="stroke:var(--metal-3);stroke-dasharray:5 4"/><text class="lbl" x="60" y="474">OBSERVABILITY · SECURITY</text></g><text class="d s" style="--i:24" x="265" y="504" text-anchor="middle">LTS logs · CES metrics · HSS security · SMN alerts</text><g class="d" style="--i:25"><rect class="bx" x="620" y="458" width="270" height="78" rx="4" style="stroke-dasharray:4 3;"/><text class="t" x="755.0" y="476" text-anchor="middle">ON-PREMISE</text><text class="s" x="755.0" y="490" text-anchor="middle">3× RKE2 clusters + standalone DBs</text><text class="s" x="755.0" y="502" text-anchor="middle">kept warm during parallel run</text></g><path class="w" pathLength="1" d="M755 458 C 755 380, 880 330, 852 302" style="--i:26;stroke:var(--green)"/><text class="d lbl" style="--i:27" x="755" y="552" text-anchor="middle">WireGuard tunnel · migration sync only</text></svg></div></div>
-</section>
-<section class="panel">
-  <div class="panel-head"><span class="id">REPORT-03</span><h2>Procedure — Migration Strategy</h2><span class="pl"></span></div>
-  <div class="panel-body"><p class="lead">Designed as a phased <b>parallel-running</b> approach: cloud is built alongside on-premise, both run simultaneously until cloud is fully validated, and only then does DNS cut over. As sole DevOps, this guarantees a working rollback path without needing a second person to manage the transition.</p><div class="flow"><div class="step"><span class="n">01</span><div><b>Cloud setup<small>EST. 2–3 WEEKS</small></b><ul><li>Provision VPC, subnets, network policies</li><li>Deploy CCE cluster — KR and INA node pools</li><li>Configure RDS (MariaDB KR, INA, Temporal), DCS (Redis), DMS (RabbitMQ), DDS (MongoDB), OBS</li><li>Set up SWR container registry — point CI/CD (Jenkins) here</li><li>Establish WireGuard VPN tunnel to on-premise</li><li>Configure WAF, HSS, LTS, CES, SMN observability stack</li></ul></div></div><div class="step"><span class="n">02</span><div><b>Parallel running<small>EST. 3–4 WEEKS</small></b><ul><li>Deploy microservices to CCE — replicate on-prem configuration</li><li>Deploy KrakenD API Gateway to KR and INA namespaces</li><li>Sync on-prem databases to cloud RDS (initial data migration)</li><li>Run parallel traffic via internal DNS — validate responses</li><li>Load test cloud against on-prem benchmarks</li><li>Write and validate rollback runbooks</li></ul></div></div><div class="step"><span class="n">03</span><div><b>Cutover & decommission<small>EST. 1–2 WEEKS</small></b><ul><li>Lower DNS TTL 48 hours before the cutover window</li><li>Execute cutover during the lowest-traffic window</li><li>Intensive monitoring for 72 hours post-cutover</li><li>Keep on-premise warm as rollback for 1–2 weeks</li><li>Decommission on-premise and tear down VPN once cloud is confirmed stable</li></ul></div></div></div></div>
-</section>
-<section class="panel">
-  <div class="panel-head"><span class="id">REPORT-04</span><h2>Wiring Map — Service Mapping</h2><span class="pl"></span></div>
-  <div class="panel-body"><div class="tblwrap"><table class="tbl"><tr><th>Current on-premise</th><th></th><th>Huawei Cloud target</th><th>Type</th></tr><tr><td>Nginx Proxy Manager (NPM)</td><td class="arrow">→</td><td>ELB — Elastic Load Balancer</td><td><span class="chip">managed</span></td></tr><tr><td>ModSecurity + CrowdSec</td><td class="arrow">→</td><td>WAF + HSS cloud-native security</td><td><span class="chip">managed</span></td></tr><tr><td>KrakenD API Gateway (×3)</td><td class="arrow">→</td><td>KrakenD in CCE (KR + INA namespaces)</td><td><span class="chip hot">in-cluster</span></td></tr><tr><td>Kubernetes RKE2 (dev/staging/prod)</td><td class="arrow">→</td><td>CCE — Cloud Container Engine</td><td><span class="chip">managed</span></td></tr><tr><td>MariaDB (2 master + 1 replica)</td><td class="arrow">→</td><td>RDS — MariaDB (KR + INA + Temporal)</td><td><span class="chip">managed</span></td></tr><tr><td>MongoDB (standalone)</td><td class="arrow">→</td><td>DDS — Document Database Service</td><td><span class="chip">managed</span></td></tr><tr><td>Redis (standalone)</td><td class="arrow">→</td><td>DCS — Distributed Cache Service</td><td><span class="chip">managed</span></td></tr><tr><td>RabbitMQ (standalone)</td><td class="arrow">→</td><td>DMS — Distributed Message Service</td><td><span class="chip">managed</span></td></tr><tr><td>MinIO (standalone)</td><td class="arrow">→</td><td>OBS — Object Storage Service</td><td><span class="chip">managed</span></td></tr><tr><td>Prometheus + Grafana</td><td class="arrow">→</td><td>CES + ECS Grafana (hybrid)</td><td><span class="chip hot">hybrid</span></td></tr></table></div></div>
-</section>
-<section class="panel">
-  <div class="panel-head"><span class="id">REPORT-05</span><h2>Risk Register — Risks & Mitigations</h2><span class="pl"></span></div>
-  <div class="panel-body"><div class="tblwrap"><table class="tbl"><tr><th>Risk</th><th>Mitigation</th><th>Severity</th></tr><tr><td>DNS cutover causes downtime due to propagation delay</td><td>Lower TTL 48 hrs before. Execute during lowest-traffic window. On-prem stays warm as rollback 1–2 weeks post-cutover.</td><td><span class="sev hi">HIGH</span></td></tr><tr><td>Data inconsistency during DB migration</td><td>Replicate on-prem to RDS before any traffic switch. Validate row counts and checksums. Full backup before each step.</td><td><span class="sev hi">HIGH</span></td></tr><tr><td>Solo DevOps — no backup person during cutover</td><td>Detailed runbooks for every cutover step. Explicit rollback triggers (error-rate threshold, latency spike). Rollback rehearsed in staging first.</td><td><span class="sev hi">HIGH</span></td></tr><tr><td>KrakenD config drift between on-prem and CCE</td><td>Mirror KrakenD config to CCE during Phase 2. Run parallel traffic and compare responses before cutover.</td><td><span class="sev md">MEDIUM</span></td></tr><tr><td>WireGuard VPN instability during data sync</td><td>VPN is used for migration sync only — cloud is fully independent. Instability slows sync but never affects production traffic.</td><td><span class="sev lo">LOW</span></td></tr></table></div></div>
-</section>
-<section class="panel">
-  <div class="panel-head"><span class="id">REPORT-06</span><h2>Parts List — Key Design Decisions</h2><span class="pl"></span></div>
-  <div class="panel-body"><div class="grid2"><div class="card"><b>Phased migration</b><p>As sole DevOps, a big-bang migration is too risky. Running cloud in parallel until stable means there's always a working fallback — critical when one person is responsible for the entire infrastructure.</p><span class="ft">// RISK STRATEGY</span></div><div class="card"><b>KrakenD stays in CCE</b><p>Rather than swapping in a cloud-native API gateway, the same KrakenD config is deployed inside CCE — smaller migration scope, preserved routing logic, less risk, faster migration.</p><span class="ft">// API GATEWAY</span></div><div class="card"><b>All DBs → managed</b><p>MariaDB, MongoDB, Redis, RabbitMQ all move to managed services — eliminating the biggest solo-DevOps burden: standalone servers, manual backups, manual failover. The time saved goes back into delivery.</p><span class="ft">// DATABASE</span></div><div class="card"><b>MinIO → OBS</b><p>Self-managed MinIO needs disk management and backup orchestration. OBS is S3-compatible, so most MinIO clients work without code changes. Major operational simplification, minimal app impact.</p><span class="ft">// OBJECT STORAGE</span></div><div class="card"><b>WAF + HSS replace ModSec</b><p>ModSecurity and CrowdSec require active rule management on self-managed Nginx. Huawei WAF and HSS deliver managed threat detection — freeing the solo DevOps from security-rule maintenance.</p><span class="ft">// SECURITY</span></div><div class="card"><b>WireGuard as migration bridge</b><p>A simple, high-performance encrypted tunnel for the parallel phase. Easier to configure than IPSec, lower latency for DB replication, and trivially torn down post-migration.</p><span class="ft">// CONNECTIVITY</span></div></div></div>
-</section><nav class="casenav" aria-label="Case studies"><a href="/case-k8s"><span style="color:var(--orange);font-family:var(--d-mono)">◂</span><div><div class="dir">PRJ-001 · PREV DRAWER</div><div class="ttl">Production Kubernetes</div></div></a><a class="next" href="/case-ops"><div><div class="dir">PRJ-003 · NEXT DRAWER</div><div class="ttl">Multi-Cluster Operations</div></div><span style="color:var(--orange);font-family:var(--d-mono)">▸</span></a></nav>
-</article>
+
+<main id="main" class="wrap">
+
+  <p class="crumb"><a href="../index.html#work">All case studies</a></p>
+
+  <section class="cs-hero">
+    <h1 class="display">Moving a government platform from on-premise to Huawei Cloud</h1>
+    <p class="lede">A few months ago this page was a design document. Now the migration is running: services are live on the cloud, data is syncing, QA is testing this week, and cutover is the week of 9 November 2026. Below is what was planned, what actually happened, and what’s left.</p>
+    <dl class="facts">
+      <div><dt>Role</dt><dd>Sole DevOps engineer, design through cutover</dd></div>
+      <div><dt>Status</dt><dd>Testing now, cutover week of 9 Nov 2026</dd></div>
+      <div><dt>Scope</dt><dd>50+ services, 3 source databases, 700+ gateway routes</dd></div>
+      <div><dt>Main stack</dt><dd>CCE, RDS for MariaDB, Jenkins, ArgoCD, KrakenD</dd></div>
+    </dl>
+  </section>
+
+  <section class="cs-stage stage" data-scene="sync" data-az="30" aria-label="Interactive model: the data sync">
+    <div class="scene"></div>
+    <div class="stage-bar">
+      <div class="seg" role="group" aria-label="Show the data sync during"><button type="button" data-state="stream" aria-pressed="true" data-note="Three sync services, one per source database, read binlogs across a link that drops 30–47% of packets. Lost packets fall into the gap and are read again, so nothing goes missing.">Streaming</button><button type="button" data-state="restart" aria-pressed="false" data-note="A service stops, whether from a crash, a reboot or a dropped tunnel. It restarts from its last checkpoint, and because replays are idempotent, nothing is applied twice.">Restart</button><button type="button" data-state="reverse" aria-pressed="false" data-note="After cutover the direction flips: cloud writes flow back to on-premise, so rolling back never loses data.">After cutover</button></div>
+      <p class="stage-note" data-note-out aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="why">
+    <h2 id="why">Why move at all</h2>
+    <div>
+      <p>The platform ran on physical servers I inherited: three RKE2 clusters, plus MariaDB, MongoDB, Redis, RabbitMQ and object storage on dedicated machines. It worked, but every limit landed on one person.</p>
+      <ul class="dash">
+        <li>Capacity was fixed. Scaling meant buying hardware.</li>
+        <li>Databases had no automated backups, point-in-time recovery or failover.</li>
+        <li>There was no second site. One data center problem would take down every environment.</li>
+        <li>With one DevOps engineer, each self-managed server was time taken away from everything else.</li>
+      </ul>
+      <p class="callout">The client is confidential. Names, addresses and some figures are generalised; the engineering is described as it happened.</p>
+    </div>
+  </section>
+
+  <section class="prose prose-fig" aria-labelledby="arch">
+    <h2 id="arch">Where it runs now</h2>
+    <div>
+      <p>Requests enter through a cloud load balancer and ingress-nginx, pass through one of two KrakenD gateways, and reach the services. Workflows run on Temporal and sign-in on Keycloak, both inside the cluster. The on-premise side stays warm until cutover is confirmed.</p>
+    </div>
+    <figure class="diagram" tabindex="0" aria-label="Architecture diagram. On small screens it scrolls sideways.">
+      <svg viewBox="0 0 1000 560" role="img" aria-labelledby="dg-t dg-d">
+        <title id="dg-t">Current architecture</title>
+        <desc id="dg-d">Users reach a load balancer and ingress in Huawei Cloud, then two KrakenD gateways, then 50+ application services, backed by RDS for MariaDB, MongoDB, Redis and RabbitMQ. Temporal and Keycloak run in the cluster. A sync host reads binlogs from the on-premise MariaDB servers over an overlay network and writes them into RDS. On-premise clusters stay warm as a fallback, and object storage is still reached on-premise through its public endpoint.</desc>
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#16202a"/></marker>
+        </defs>
+        <style>
+          .bx { fill: #fff; stroke: #16202a; stroke-width: 1.5; }
+          .bx2 { fill: #e3e8e7; stroke: #16202a; stroke-width: 1.5; }
+          .t { font: 600 15px "Schibsted Grotesk", sans-serif; fill: #16202a; }
+          .s { font: 400 13px "Schibsted Grotesk", sans-serif; fill: #56636d; }
+          .n { font: 400 12px "Schibsted Grotesk", sans-serif; fill: #16202a; }
+          .lbl { font: 700 14px "Schibsted Grotesk", sans-serif; fill: #16202a; }
+          .ln { stroke: #16202a; stroke-width: 1.5; fill: none; }
+          .sync { stroke: #16202a; stroke-width: 2; stroke-dasharray: 7 5; fill: none; }
+        </style>
+
+        <!-- users -->
+        <rect class="bx2" x="560" y="16" width="160" height="40" rx="20"/>
+        <text class="t" x="640" y="41" text-anchor="middle">Users</text>
+        <path class="ln" d="M640 56V108" marker-end="url(#ah)"/>
+
+        <!-- cloud region -->
+        <rect x="300" y="80" width="680" height="460" rx="6" fill="none" stroke="#16202a" stroke-width="2"/>
+        <text class="lbl" x="316" y="102">Huawei Cloud</text>
+
+        <rect class="bx" x="440" y="110" width="400" height="46" rx="3"/>
+        <text class="t" x="640" y="138" text-anchor="middle">Load balancer + ingress-nginx, TLS by cert-manager</text>
+        <path class="ln" d="M560 156V188" marker-end="url(#ah)"/>
+        <path class="ln" d="M720 156V188" marker-end="url(#ah)"/>
+
+        <rect class="bx" x="340" y="190" width="290" height="50" rx="3"/>
+        <text class="t" x="356" y="212">KrakenD, main API</text>
+        <text class="s" x="356" y="230">700+ routes</text>
+        <rect class="bx" x="650" y="190" width="290" height="50" rx="3"/>
+        <text class="t" x="666" y="212">KrakenD, payment API</text>
+        <text class="s" x="666" y="230">cut over on 28 Oct</text>
+        <path class="ln" d="M485 240V268" marker-end="url(#ah)"/>
+        <path class="ln" d="M795 240V268" marker-end="url(#ah)"/>
+
+        <rect class="bx" x="340" y="270" width="600" height="52" rx="3"/>
+        <text class="t" x="356" y="292">Application services</text>
+        <text class="s" x="356" y="311">50+ Go and .NET services, deployed by ArgoCD from images in SWR</text>
+        <path class="ln" d="M640 322V348" marker-end="url(#ah)"/>
+
+        <rect class="bx" x="340" y="350" width="170" height="46" rx="3"/>
+        <text class="t" x="425" y="378" text-anchor="middle">RDS for MariaDB</text>
+        <rect class="bx" x="526" y="350" width="130" height="46" rx="3"/>
+        <text class="t" x="591" y="378" text-anchor="middle">MongoDB</text>
+        <rect class="bx" x="672" y="350" width="120" height="46" rx="3"/>
+        <text class="t" x="732" y="378" text-anchor="middle">Redis</text>
+        <rect class="bx" x="808" y="350" width="132" height="46" rx="3"/>
+        <text class="t" x="874" y="378" text-anchor="middle">RabbitMQ</text>
+
+        <rect x="340" y="430" width="200" height="56" rx="3" fill="#ffcd1c" stroke="#16202a" stroke-width="1.5"/>
+        <text class="t" x="356" y="453">Sync host</text>
+        <text class="n" x="356" y="472">binlog CDC, 3 streams</text>
+        <path class="ln" d="M425 430V398" marker-end="url(#ah)"/>
+
+        <rect class="bx2" x="560" y="430" width="180" height="56" rx="3"/>
+        <text class="t" x="576" y="453">Temporal</text>
+        <text class="s" x="576" y="472">scheduled workflows</text>
+        <rect class="bx2" x="760" y="430" width="180" height="56" rx="3"/>
+        <text class="t" x="776" y="453">Keycloak</text>
+        <text class="s" x="776" y="472">sign-in and tokens</text>
+
+        <!-- on-premise -->
+        <rect x="10" y="80" width="210" height="460" rx="6" fill="none" stroke="#16202a" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <text class="lbl" x="24" y="102">On-premise</text>
+        <rect class="bx2" x="24" y="120" width="182" height="58" rx="3"/>
+        <text class="t" x="38" y="144">3 RKE2 clusters</text>
+        <text class="s" x="38" y="164">kept warm as fallback</text>
+        <rect class="bx2" x="24" y="272" width="182" height="52" rx="3"/>
+        <text class="t" x="38" y="294">Object storage</text>
+        <text class="s" x="38" y="312">to OBS after cutover</text>
+        <rect class="bx2" x="24" y="430" width="182" height="56" rx="3"/>
+        <text class="t" x="38" y="453">MariaDB sources ×3</text>
+        <text class="s" x="38" y="472">binlog, row format</text>
+
+        <path class="ln" d="M338 298H210" stroke-dasharray="3 4" marker-end="url(#ah)"/>
+        <text class="n" x="262" y="270" text-anchor="middle">public</text>
+        <text class="n" x="262" y="285" text-anchor="middle">endpoint</text>
+        <path class="sync" d="M208 458H336" marker-end="url(#ah)"/>
+        <text class="n" x="262" y="482" text-anchor="middle">overlay,</text>
+        <text class="n" x="262" y="497" text-anchor="middle">sync only</text>
+      </svg>
+      <figcaption class="scroll-hint">Swipe sideways to see the whole diagram.</figcaption>
+    </figure>
+  </section>
+
+  <section class="prose" aria-labelledby="pipe">
+    <h2 id="pipe">One pipeline for every service</h2>
+    <div>
+      <p>Every service is brought across the same way, so a new one is routine and a broken one is easy to compare with a working one.</p>
+      <ol class="steps">
+        <li>The source repo gets a dedicated cloud branch with a Jenkinsfile and pipeline config.</li>
+        <li>Jenkins builds only from a semver tag and waits for an approval before production.</li>
+        <li>The image goes to SWR and the pipeline bumps its tag in the manifest repo.</li>
+        <li>ArgoCD applies the change. Rolling back is a <code>git revert</code>.</li>
+      </ol>
+      <p>Bringing 50+ services across by hand would have taken weeks, so I wrote small tools for the repetitive parts:</p>
+      <ul class="dash">
+        <li>A repo inspector that reads a service’s code and env files and lists every setting it actually uses.</li>
+        <li>An env translator that maps on-premise hosts, queues and credentials to their cloud equivalents and flags anything it can’t map, like a hard-coded IP.</li>
+        <li>A job generator that clones a known-good Jenkins job for each new service.</li>
+        <li>A gateway checker that compares every backend in the KrakenD config with the services running in the cluster. It found about 30 backends that didn’t exist in the cluster yet.</li>
+      </ul>
+      <p>Where a service had been rewritten from .NET to Go, the Go version replaced it one service at a time. The old one was scaled to zero, not deleted, so switching back is one change.</p>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="sync">
+    <h2 id="sync">Keeping data in sync over a bad link</h2>
+    <div>
+      <p>A colleague handled the initial dump and restore into RDS. My job was to close the gap between the dump and the restore, then keep the cloud level with on-premise until cutover.</p>
+      <p>The link between the two sides drops <strong>30–47% of packets</strong> and moves about 50–80 KB/s per connection. Native replication wasn’t a good fit: the target databases have new names, the source accounts have no SUPER privilege, and the connection breaks often. So I wrote a small CDC service in Python.</p>
+<pre class="code-block">BinlogReader ─▶ Transformer ─▶ Applier ─▶ CheckpointStore
+ (row events)    (rename db)    (idempotent)  (resume point)
+                     └─▶ Reconciler  (tables without a primary key)</pre>
+      <ul class="dash">
+        <li>One systemd service per source database, so a slow stream doesn’t hold up the others.</li>
+        <li>Replays are idempotent, so restarting from an earlier position is always safe.</li>
+        <li>Tables without a primary key are excluded from replay and reconciled separately.</li>
+        <li>The overlay network let idle peers fall asleep, so routes stopped working. A pre-start check and a one-minute keepalive timer fixed it.</li>
+      </ul>
+      <p>For tables created after the original restore, replaying days of binlog would have taken about nine hours. Instead I recorded the binlog position, took a snapshot of just those tables, loaded it, and replayed from that position. Row counts and checksums matched on all 13 tables.</p>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="broke">
+    <h2 id="broke">What broke along the way</h2>
+    <div>
+      <h3>A database down for five days without an alert</h3>
+      <p>A misbehaving pod flooded MongoDB with connections and the log grew to 139 GB. Log rotation with <code>copytruncate</code> needs as much free space as the file, so the disk filled up and <code>mongod</code> stopped. The systemd unit had no restart policy. Fix: <code>Restart=on-failure</code>, hourly rotation so the size cap actually applies, and alarms on disk usage and the process.</p>
+      <h3>A crash loop Kubernetes reported as healthy</h3>
+      <p>A worker still pointed at the on-premise workflow engine. It panicked every ten seconds, but a wrapper inside the container restarted the process, so the pod showed zero restarts. I found it by error volume in the logs, not pod status, and pointed it at the in-cluster Temporal.</p>
+      <h3>Two kinds of gateway 500</h3>
+      <p>QA reported 500s. In the gateway logs some took exactly 9.000 seconds, which is the KrakenD timeout, meaning the backend was hanging. Others failed in 3–6 ms, meaning the backend host didn’t exist. Splitting them that way pointed straight at the dead database and the missing services.</p>
+      <h3>Sign-in broken behind the ingress</h3>
+      <p>Keycloak expected the <code>Forwarded</code> header but ingress-nginx sends <code>X-Forwarded-*</code>, so token issuers came out as <code>http://</code> and the admin console failed. I switched the proxy-header mode and documented the change until it’s moved into the Helm values.</p>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="plan">
+    <h2 id="plan">Planned versus actual</h2>
+    <div class="wide">
+      <table class="ledger">
+        <thead><tr><th scope="col">Area</th><th scope="col">Original design</th><th scope="col">What happened</th></tr></thead>
+        <tbody>
+          <tr><td>Kubernetes</td><td>RKE2 on-premise to CCE</td><td>As planned</td></tr>
+          <tr><td>MariaDB</td><td>Managed RDS</td><td>As planned</td></tr>
+          <tr><td>API gateway</td><td>Same KrakenD config inside CCE</td><td>As planned. The payment gateway has already cut over.</td></tr>
+          <tr><td>Data sync</td><td>Replicate to RDS over a WireGuard tunnel</td><td><span class="changed">Changed</span> Custom binlog CDC over a WireGuard-based overlay network, because of renamed databases and the unreliable link</td></tr>
+          <tr><td>Services</td><td>Move as they are</td><td><span class="changed">Changed</span> Go rewrites replace their .NET versions where one exists</td></tr>
+          <tr><td>Object storage</td><td>MinIO to OBS during migration</td><td><span class="changed">Deferred</span> Reached through its existing public endpoint, moves after cutover</td></tr>
+          <tr><td>MongoDB</td><td>Managed DDS</td><td><span class="changed">Changed</span> Self-managed on a cloud VM for now, with restart policy and alarms</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="cut">
+    <h2 id="cut">The cutover, and the way back</h2>
+    <div>
+      <ol class="steps">
+        <li>Lower DNS TTL 48 hours ahead.</li>
+        <li>Stop scheduled workers on-premise so no job runs on both sides.</li>
+        <li>Let sync lag reach zero, then check row counts and checksums.</li>
+        <li>Switch DNS in the lowest-traffic window and watch closely for 72 hours.</li>
+        <li>Reverse the sync so on-premise keeps receiving cloud writes.</li>
+        <li>Keep on-premise warm for one to two weeks, then decommission.</li>
+      </ol>
+      <p>Rollback triggers are written down in advance: error rate and latency thresholds. Because the sync runs in reverse, rolling back means switching DNS back, without losing what users wrote in the meantime.</p>
+      <h3>Still on the list this week</h3>
+      <ul class="dash">
+        <li>End-to-end QA on every user-facing flow against the cloud stack.</li>
+        <li>Tightening the sync to a least-privilege database account.</li>
+        <li>Alarms on sync lag, so a stalled stream pages someone.</li>
+        <li>Moving manual cluster changes back into Helm values and Git.</li>
+      </ul>
+    </div>
+  </section>
+
+<section class="case-end" aria-label="More case studies">
+    <div>
+      <p class="next-label">Next case study</p>
+      <a class="next-link" href="../case-ops/index.html">
+        <strong>Running inherited infrastructure alone</strong>
+        <span>Three RKE2 clusters, per-environment gateways and a WAF/IPS edge, run by one person.</span>
+      </a>
+    </div>
+    <nav aria-label="All case studies">
+      <p class="next-label">All case studies</p>
+      <ol class="case-index"><li><a href="../case-huawei/index.html" aria-current="page">On-premise to Huawei Cloud</a></li><li><a href="../case-ops/index.html">Running inherited infrastructure alone</a></li><li><a href="../case-k8s/index.html">Production Kubernetes with RKE2</a></li><li><a href="../case-galera/index.html">MariaDB Galera behind HAProxy</a></li><li><a href="../case-monitoring/index.html">Alerts that reach the right person</a></li></ol>
+    </nav>
+  </section>
+
 </main>
-<footer>© 2026 NOVAL RAMDANI · <a href="/">RACK-01</a> · <a href="https://linkedin.com/in/noval-ramdani" target="_blank" rel="noopener">LINKEDIN</a> · <a href="mailto:novalramdani.work@gmail.com">EMAIL</a></footer>
-<script>
-(function(){
-var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-var panels=document.querySelectorAll('.panel');
-if('IntersectionObserver' in window && !reduced){
-  var io=new IntersectionObserver(function(es){es.forEach(function(e){
-    if(e.isIntersecting){e.target.classList.add('on');
-      var s=e.target.querySelector('.schem');if(s)s.classList.add('go');
-      io.unobserve(e.target);}});},{threshold:0.1});
-  panels.forEach(function(p){io.observe(p);});
-}else{
-  panels.forEach(function(p){p.classList.add('on');});
-  document.querySelectorAll('.schem').forEach(function(s){s.classList.add('go');});
-}
-document.querySelectorAll('[data-replay]').forEach(function(b){
-  b.addEventListener('click',function(){
-    var s=b.closest('.schem');s.classList.remove('go');
-    void s.offsetWidth;s.classList.add('go');
-  });
-});
-})();
-</script>
+
+<footer class="cs-contact">
+  <div class="wrap">
+    <div class="cs-contact-grid">
+      <div>
+        <h2 class="h2">Planning a migration of your own?</h2>
+        <p>I can help you plan the phases, the data sync and the way back before anything moves. I’m open to freelance, consulting and full-time remote work.</p>
+        <a class="contact-mail" href="mailto:novalramdani.work@gmail.com?subject=Hi%20Noval">novalramdani.work@gmail.com</a>
+      </div>
+      <ul class="cs-links">
+        <li><a href="https://linkedin.com/in/noval-ramdani" target="_blank" rel="noopener"><b>LinkedIn</b><span>/in/noval-ramdani</span></a></li>
+        <li><a href="https://www.upwork.com/freelancers/~01270d3c2bfab0e216?mp_source=share" target="_blank" rel="noopener"><b>Upwork</b><span>Hire me for a project</span></a></li>
+        <li><a href="../index.html"><b>Home</b><span>Experience and toolbox</span></a></li>
+      </ul>
+    </div>
+    <div class="foot"><span>© 2026 Noval Ramdani</span><span>Jakarta, Indonesia</span></div>
+  </div>
+</footer>
+<script src="../assets/scenes.js" defer></script>
 </body>
 </html>
