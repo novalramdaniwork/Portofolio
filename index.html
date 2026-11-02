@@ -117,23 +117,31 @@
         <h2 class="h2" id="inside-title">What the migration actually takes</h2>
         <p>The client is confidential, so names and addresses are left out. The work isn’t.</p>
       </div>
-      <div class="findings">
-        <div class="finding">
-          <h3 class="h3">One pipeline for every service</h3>
-          <p>Each of the 50+ services goes through the same path: a cloud branch, a Jenkins build that requires a version tag and an approval, the registry, then ArgoCD. I wrote small scripts that read a repo, translate its on-premise settings to cloud ones and generate the manifests, so bringing a new service across takes minutes.</p>
-        </div>
-        <div class="finding">
-          <h3 class="h3">Syncing data over a link that drops packets</h3>
-          <p>The connection between the data center and the cloud loses <span class="fig">30–47%</span> of its packets. I wrote a Python service that reads MariaDB binlogs, replays them into RDS without creating duplicates and saves its position as it goes. It runs three source databases in parallel and survives restarts.</p>
-        </div>
-        <div class="finding">
-          <h3 class="h3">Checking the gateway against what’s really running</h3>
-          <p>The API gateway has <span class="fig">700+</span> routes. Comparing every backend in its config with the services actually deployed turned up about 30 that were missing, before users ran into them.</p>
-        </div>
-        <div class="finding">
-          <h3 class="h3">Catching the quiet failures</h3>
-          <p>A database that had been down for five days because its log filled the disk. A worker that crash-looped inside a container Kubernetes still reported as healthy. Each fix shipped together with the alarm or restart policy that would have caught it sooner.</p>
-        </div>
+      <div class="fx-grid">
+        <article class="fx">
+          <p class="fx-num">50+<span>services</span></p>
+          <span class="sq-row sq-50" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <h3>One pipeline for every service</h3>
+          <p>Each service goes through the same path: a cloud branch, a Jenkins build that needs a version tag and an approval, the registry, then ArgoCD. Small scripts read each repo, translate its on-premise settings and generate the manifests, so bringing a service across takes minutes.</p>
+        </article>
+        <article class="fx">
+          <p class="fx-num">30–47%<span>packet loss</span></p>
+          <span class="sq-row sq-loss" aria-hidden="true"><i></i><i></i><i class="m"></i><i></i><i></i><i class="m"></i><i class="m"></i><i></i><i></i><i class="m"></i><i></i><i></i><i class="m"></i><i></i><i class="m"></i><i></i><i></i><i class="m"></i><i class="m"></i><i></i></span>
+          <h3>Syncing data over a link that drops packets</h3>
+          <p>I wrote a Python service that reads MariaDB binlogs, replays them into RDS without creating duplicates and saves its position as it goes. Three source databases run in parallel and it survives restarts.</p>
+        </article>
+        <article class="fx">
+          <p class="fx-num">700+<span>gateway routes</span></p>
+          <span class="sq-row sq-routes" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <h3>Checking the gateway against what’s running</h3>
+          <p>Comparing every backend in the gateway config with the services actually deployed turned up about 30 that were missing, before users ran into them.</p>
+        </article>
+        <article class="fx">
+          <p class="fx-num">5 days<span>unnoticed, once</span></p>
+          <span class="sq-row sq-days" aria-hidden="true"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i></i><i></i></span>
+          <h3>Catching the quiet failures</h3>
+          <p>A database down for five days because its log filled the disk. A worker crash-looping inside a container Kubernetes called healthy. Every fix shipped with the alarm or restart policy that would have caught it sooner.</p>
+        </article>
       </div>
     </div>
   </section>
@@ -144,33 +152,53 @@
         <h2 class="h2" id="work-title">Case studies</h2>
         <p>Written as I’d hand them to the next engineer: the problem, the design, and the trade-offs.</p>
       </div>
-      <ul class="cases">
-        <li class="case"><a href="case-huawei/index.html">
-          <h3 class="h3">On-premise to Huawei Cloud</h3>
-          <span class="what">Live migration of a government platform, from cluster build to cutover plan</span>
-          <span class="meta"><span class="live">In progress</span></span>
-        </a></li>
-        <li class="case"><a href="case-ops/index.html">
-          <h3 class="h3">Running inherited infrastructure alone</h3>
-          <span class="what">Three RKE2 clusters, per-environment KrakenD gateways and a WAF/IPS edge</span>
-          <span class="meta">Operations</span>
-        </a></li>
-        <li class="case"><a href="case-k8s/index.html">
-          <h3 class="h3">Production Kubernetes with RKE2</h3>
-          <span class="what">HA control plane, workload placement and autoscaling for a government-grade platform</span>
-          <span class="meta">Platform</span>
-        </a></li>
-        <li class="case"><a href="case-galera/index.html">
-          <h3 class="h3">MariaDB Galera behind HAProxy</h3>
-          <span class="what">Synchronous multi-master cluster replacing a single database server</span>
-          <span class="meta">Database</span>
-        </a></li>
-        <li class="case"><a href="case-monitoring/index.html">
-          <h3 class="h3">Alerts that reach the right person</h3>
-          <span class="what">Prometheus and Alertmanager routed through n8n to Telegram by severity</span>
-          <span class="meta">Monitoring</span>
-        </a></li>
-      </ul>
+      <div class="case-grid">
+        <a class="ccard ccard-feature" href="case-huawei/index.html">
+          <span class="ccard-art"><img src="assets/thumbs/sync.webp" alt="" decoding="async"></span>
+          <span class="ccard-body">
+            <span class="ccard-tag live">In progress</span>
+            <span class="ccard-title">On-premise to Huawei Cloud</span>
+            <span class="ccard-desc">A live migration of a government platform: 50+ services, a custom binlog sync over a lossy link, and a cutover planned with a way back.</span>
+            <span class="ccard-more">Read the case study</span>
+          </span>
+        </a>
+        <a class="ccard" href="case-ops/index.html">
+          <span class="ccard-art"><img src="assets/thumbs/ops.webp" alt="" decoding="async"></span>
+          <span class="ccard-body">
+            <span class="ccard-tag">Operations</span>
+            <span class="ccard-title">Running inherited infrastructure alone</span>
+            <span class="ccard-desc">Three RKE2 clusters, per-environment gateways and a WAF/IPS edge, taken over and improved by one person.</span>
+            <span class="ccard-more">Read the case study</span>
+          </span>
+        </a>
+        <a class="ccard" href="case-k8s/index.html">
+          <span class="ccard-art"><img src="assets/thumbs/k8s.webp" alt="" decoding="async"></span>
+          <span class="ccard-body">
+            <span class="ccard-tag">Platform</span>
+            <span class="ccard-title">Production Kubernetes with RKE2</span>
+            <span class="ccard-desc">An HA control plane, labelled workers and a fallback node that absorbed every traffic spike.</span>
+            <span class="ccard-more">Read the case study</span>
+          </span>
+        </a>
+        <a class="ccard" href="case-galera/index.html">
+          <span class="ccard-art"><img src="assets/thumbs/galera.webp" alt="" decoding="async"></span>
+          <span class="ccard-body">
+            <span class="ccard-tag">Database</span>
+            <span class="ccard-title">MariaDB Galera behind HAProxy</span>
+            <span class="ccard-desc">A synchronous three-node cluster with automatic failover and nightly off-site backups.</span>
+            <span class="ccard-more">Read the case study</span>
+          </span>
+        </a>
+        <a class="ccard" href="case-monitoring/index.html">
+          <span class="ccard-art"><img src="assets/thumbs/monitoring.webp" alt="" decoding="async"></span>
+          <span class="ccard-body">
+            <span class="ccard-tag">Monitoring</span>
+            <span class="ccard-title">Alerts that reach the right person</span>
+            <span class="ccard-desc">Prometheus to Telegram, routed by severity, with slash commands for live checks.</span>
+            <span class="ccard-more">Read the case study</span>
+          </span>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -180,6 +208,7 @@
         <h2 class="h2" id="exp-title">Experience</h2>
         <p>Five years, two companies. Support desk to data center to sole DevOps engineer.</p>
       </div>
+      <div class="career-wrap" tabindex="0" aria-label="Career timeline, scrolls sideways on small screens"><div class="career" role="img" aria-label="Career from 2021 to now: Technical Support, Data Center Operations, System Engineer and DevOps Engineer at eBdesk, then DevOps Engineer at Sentral Link Solutions."><div class="cstep" style="left:0.00%;width:17.54%;--lvl:0"><span><b>Technical Support</b>eBdesk</span></div><div class="cstep" style="left:17.54%;width:23.33%;--lvl:1"><span><b>Data Center Ops</b>eBdesk</span></div><div class="cstep" style="left:40.88%;width:24.91%;--lvl:2"><span><b>System Engineer</b>eBdesk</span></div><div class="cstep" style="left:65.79%;width:13.16%;--lvl:3"><span><b>DevOps Engineer</b>eBdesk</span></div><div class="cstep now" style="left:80.35%;width:17.72%;--lvl:4"><span><b>DevOps Engineer</b>Sentral Link</span></div><div class="cyears"><span style="left:13.16%">2022</span><span style="left:30.70%">2023</span><span style="left:48.25%">2024</span><span style="left:65.79%">2025</span><span style="left:83.33%">2026</span></div></div></div>
       <div class="jobs">
         <article class="job">
           <div class="job-org">
@@ -232,14 +261,7 @@
         <h2 class="h2" id="tool-title">Toolbox</h2>
         <p>What I use in production today, not a list of things I’ve read about.</p>
       </div>
-      <div class="cols">
-        <div><h3>Kubernetes</h3><p>RKE2, Rancher, Huawei CCE, Helm, Kustomize, ingress-nginx, cert-manager</p></div>
-        <div><h3>Delivery</h3><p>Jenkins, GitLab CI, ArgoCD, Git, SWR and container registries</p></div>
-        <div><h3>Cloud and edge</h3><p>Huawei Cloud (CCE, RDS, ELB, OBS), AWS (EC2, EKS, IAM), KrakenD, Nginx, HAProxy, ModSecurity, CrowdSec</p></div>
-        <div><h3>Data</h3><p>MariaDB and Galera, PostgreSQL, MongoDB, Redis, RabbitMQ, Kafka, Elasticsearch, binlog CDC</p></div>
-        <div><h3>Observability</h3><p>Prometheus, Grafana, Alertmanager, Fluentd, Promtail, Cloud Eye</p></div>
-        <div><h3>Automation</h3><p>Python, Bash, Terraform, Ansible, n8n, systemd, Temporal, Keycloak</p></div>
-      </div>
+      <p class="legend"><i></i>In use on the current migration</p><div class="tool-grid"><div><h3>Kubernetes</h3><ul class="chips"><li>RKE2</li><li>Rancher</li><li class="now">Huawei CCE</li><li class="now">Helm</li><li class="now">Kustomize</li><li class="now">ingress-nginx</li><li class="now">cert-manager</li></ul></div><div><h3>Delivery</h3><ul class="chips"><li class="now">Jenkins</li><li class="now">ArgoCD</li><li>GitLab CI</li><li>Git</li><li class="now">SWR</li><li>Harbor</li></ul></div><div><h3>Cloud and edge</h3><ul class="chips"><li class="now">Huawei RDS</li><li class="now">ELB</li><li>OBS</li><li>AWS EC2, EKS, IAM</li><li class="now">KrakenD</li><li>Nginx</li><li>HAProxy</li><li>ModSecurity</li><li>CrowdSec</li></ul></div><div><h3>Data</h3><ul class="chips"><li class="now">MariaDB</li><li>Galera</li><li>PostgreSQL</li><li class="now">MongoDB</li><li class="now">Redis</li><li class="now">RabbitMQ</li><li>Kafka</li><li>Elasticsearch</li><li class="now">binlog CDC</li></ul></div><div><h3>Observability</h3><ul class="chips"><li>Prometheus</li><li>Grafana</li><li>Alertmanager</li><li class="now">Cloud Eye</li><li>Fluentd</li><li>Promtail</li></ul></div><div><h3>Automation</h3><ul class="chips"><li class="now">Python</li><li class="now">Bash</li><li class="now">systemd</li><li class="now">Temporal</li><li class="now">Keycloak</li><li class="now">NetBird</li><li>Terraform</li><li>Ansible</li><li>n8n</li></ul></div></div>
     </div>
   </section>
 
@@ -274,28 +296,31 @@
     </div>
   </section>
 
-  <section class="section" aria-labelledby="how-title">
+  <section class="how" aria-labelledby="how-title">
     <div class="wrap">
-      <div class="section-head">
-        <h2 class="h2" id="how-title">How I work</h2>
-        <p>Three rules that came from being the only person on call.</p>
-      </div>
-      <div class="cols">
-        <div><h3>Predictable beats clever</h3><p>If I can’t explain how a system recovers, it isn’t ready for production.</p></div>
-        <div><h3>Every fix gets an alarm</h3><p>Fixing an outage is half the job. The other half is making sure the next one pages someone.</p></div>
-        <div><h3>Always keep a way back</h3><p>Phased rollouts, warm fallbacks and rollback steps written down before any change goes live.</p></div>
+      <h2 class="h2" id="how-title">How I work</h2>
+      <p class="how-sub">Three rules that came from being the only person on call.</p>
+      <div class="rules">
+        <div><h3>Predictable beats clever.</h3><p>If I can’t explain how a system recovers, it isn’t ready for production.</p></div>
+        <div><h3>Every fix gets an alarm.</h3><p>Fixing an outage is half the job. The other half is making sure the next one pages someone.</p></div>
+        <div><h3>Always keep a way back.</h3><p>Phased rollouts, warm fallbacks and rollback steps written down before any change goes live.</p></div>
       </div>
     </div>
   </section>
 
-  <section class="contact" id="contact" aria-labelledby="contact-title">
+  <section class="cs-contact" id="contact" aria-labelledby="contact-title">
     <div class="wrap">
-      <h2 class="h2" id="contact-title">Need someone to run, move or untangle your infrastructure?</h2>
-      <p>I’m open to DevOps freelance projects, infrastructure consulting and full-time remote roles. Based in Jakarta, working with teams anywhere.</p>
-      <a class="contact-mail" href="mailto:novalramdani.work@gmail.com?subject=Hi%20Noval">novalramdani.work@gmail.com</a>
-      <div class="contact-links">
-        <a href="https://linkedin.com/in/noval-ramdani" target="_blank" rel="noopener">LinkedIn</a>
-        <a href="https://www.upwork.com/freelancers/~01270d3c2bfab0e216?mp_source=share" target="_blank" rel="noopener">Upwork</a>
+      <div class="cs-contact-grid">
+        <div>
+          <h2 class="h2" id="contact-title">Need someone to run, move or untangle your infrastructure?</h2>
+          <p>I’m open to DevOps freelance projects, infrastructure consulting and full-time remote roles. Based in Jakarta, working with teams anywhere.</p>
+          <a class="contact-mail" href="mailto:novalramdani.work@gmail.com?subject=Hi%20Noval">novalramdani.work@gmail.com</a>
+        </div>
+        <ul class="cs-links">
+          <li><a href="https://linkedin.com/in/noval-ramdani" target="_blank" rel="noopener"><b>LinkedIn</b><span>/in/noval-ramdani</span></a></li>
+          <li><a href="https://www.upwork.com/freelancers/~01270d3c2bfab0e216?mp_source=share" target="_blank" rel="noopener"><b>Upwork</b><span>Hire me for a project</span></a></li>
+          <li><a href="case-huawei/index.html"><b>Case studies</b><span>Start with the migration</span></a></li>
+        </ul>
       </div>
       <div class="foot">
         <div class="edu">
@@ -308,7 +333,8 @@
   </section>
 
 </main>
-<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();
+var cw = document.querySelector('.career-wrap'); if (cw) cw.scrollLeft = cw.scrollWidth;</script>
 <script src="assets/scenes.js" defer></script>
 </body>
 </html>
