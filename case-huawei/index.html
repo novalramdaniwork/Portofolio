@@ -173,6 +173,7 @@
         <li>The image goes to SWR and the pipeline bumps its tag in the manifest repo.</li>
         <li>ArgoCD applies the change. Rolling back is a <code>git revert</code>.</li>
       </ol>
+      <p>How that pipeline was designed and rolled out to 100+ repositories is <a href="../case-cicd/index.html">its own case study</a>.</p>
       <p>Bringing 50+ services across by hand would have taken weeks, so I wrote small tools for the repetitive parts:</p>
       <ul class="dash">
         <li>A repo inspector that reads a service’s code and env files and lists every setting it actually uses.</li>
@@ -259,14 +260,14 @@
 <section class="case-end" aria-label="More case studies">
     <div>
       <p class="next-label">Next case study</p>
-      <a class="next-link" href="../case-ops/index.html">
-        <strong>Running inherited infrastructure alone</strong>
-        <span>Three RKE2 clusters, per-environment gateways and a WAF/IPS edge, run by one person.</span>
+      <a class="next-link" href="../case-cicd/index.html">
+        <strong>Rebuilding CI/CD for 100+ repositories</strong>
+        <span>Server-side Jenkins scripts and drifted repositories replaced by one versioned GitOps pipeline.</span>
       </a>
     </div>
     <nav aria-label="All case studies">
       <p class="next-label">All case studies</p>
-      <ol class="case-index"><li><a href="../case-huawei/index.html" aria-current="page">On-premise to Huawei Cloud</a></li><li><a href="../case-ops/index.html">Running inherited infrastructure alone</a></li><li><a href="../case-k8s/index.html">Production Kubernetes with RKE2</a></li><li><a href="../case-galera/index.html">MariaDB Galera behind HAProxy</a></li><li><a href="../case-monitoring/index.html">Alerts that reach the right person</a></li></ol>
+      <ol class="case-index"><li><a href="../case-huawei/index.html" aria-current="page">On-premise to Huawei Cloud</a></li><li><a href="../case-cicd/index.html">Rebuilding CI/CD for 100+ repositories</a></li><li><a href="../case-ops/index.html">Running inherited infrastructure alone</a></li><li><a href="../case-k8s/index.html">Production Kubernetes with RKE2</a></li><li><a href="../case-galera/index.html">MariaDB Galera behind HAProxy</a></li><li><a href="../case-monitoring/index.html">Alerts that reach the right person</a></li></ol>
     </nav>
   </section>
 

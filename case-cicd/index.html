@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebuilding CI/CD for 100+ repositories — Noval Ramdani</title>
+<meta name="description" content="Replacing server-side Jenkins scripts and drifted GitHub/GitLab copies with one versioned GitOps pipeline, while on-premise production kept deploying the old way.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://noval-dev.vercel.app/case-cicd/">
+<meta property="og:title" content="Rebuilding CI/CD for 100+ repositories — case study by Noval Ramdani">
+<meta property="og:description" content="Replacing server-side Jenkins scripts and drifted GitHub/GitLab copies with one versioned GitOps pipeline, while on-premise production kept deploying the old way.">
+<meta property="og:image" content="https://noval-dev.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#eef1f0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23ffcd1c'/><path d='M8 23V9h3l6 9V9h3v14h-3l-6-9v9z' fill='%2316202a'/></svg>">
+<link rel="preload" href="../assets/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap">
+    <a class="site-name" href="../index.html">Noval Ramdani</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#experience">Experience</a>
+      <a href="../index.html#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <p class="crumb"><a href="../index.html#work">All case studies</a></p>
+
+  <section class="cs-hero">
+    <h1 class="display">Rebuilding CI/CD for 100+ repositories</h1>
+    <p class="lede">Every service was built by a Jenkins job whose script lived on the Jenkins server, from code split between GitHub and GitLab. I replaced that with one versioned pipeline, while the on-premise production kept deploying the old way.</p>
+    <dl class="facts"><div><dt>Role</dt><dd>Sole DevOps engineer, design and rollout</dd></div><div><dt>Scope</dt><dd>104 repositories audited and synced</dd></div><div><dt>Pipeline</dt><dd>Jenkins shared library, GitLab, SWR, ArgoCD</dd></div><div><dt>Guardrail</dt><dd>Production needs a version tag and an approval</dd></div></dl>
+  </section>
+
+  <section class="cs-stage stage" data-scene="cicd" data-az="24" aria-label="Interactive model: Show the delivery setup">
+    <div class="scene"></div>
+    <div class="stage-bar">
+      <div class="seg" role="group" aria-label="Show the delivery setup"><button type="button" data-state="before" aria-pressed="false" data-note="Code lived in two places and some GitLab copies had fallen behind (yellow). Every Jenkins job ran its own script stored on the server, not in Git, so nobody could review or reproduce it.">Before</button><button type="button" data-state="sync" aria-pressed="false" data-note="First, an audit of 104 repositories. 13 had drifted and were brought level on GitLab before a single pipeline changed.">Audit &amp; sync</button><button type="button" data-state="now" aria-pressed="true" data-note="Every service runs the same versioned pipeline: tag check, build, push to the registry, manual approval for production, then a manifest commit that ArgoCD deploys.">Now</button></div>
+      <p class="stage-note" data-note-out aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="wrong">
+    <h2 id="wrong">What was wrong</h2>
+    <div>
+<ul class="dash"><li><strong>Code in two places.</strong> Repositories had moved to GitLab months earlier, but many pipelines still pulled from GitHub, and some GitLab copies were behind.</li><li><strong>Pipelines outside Git.</strong> Each Jenkins job ran a script stored on the server. Old Jenkinsfiles hard-coded <code>git branch: 'master'</code>. No review, no history, hard to reproduce.</li><li><strong>A second production on the way.</strong> The cloud would run next to on-premise for a while, and deploying to one could not be allowed to break the other.</li><li><strong>Scale.</strong> Between 60 and 80 services had to be rebuilt and redeployed. Doing that by hand was not an option.</li></ul>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="audit">
+    <h2 id="audit">Audit before touching a pipeline</h2>
+    <div>
+
+      <p>A script compared the <code>master</code> branch on GitHub and GitLab for every repository through both APIs: 111 on GitHub, 106 on GitLab, 104 in both.</p>
+      <table class="ledger"><thead><tr><th scope="col">Result</th><th scope="col">Repositories</th><th scope="col">What happened</th></tr></thead><tbody><tr><td>Already in sync</td><td>87</td><td>Nothing to do</td></tr><tr><td>Drifted</td><td>13</td><td>Synced from GitHub to GitLab (one on a <code>main</code> branch, synced by hand)</td></tr><tr><td>Different branch name</td><td>2</td><td>Checked by hand (<code>main</code>, <code>develop</code>), already in sync</td></tr><tr><td>Empty</td><td>2</td><td>Skipped</td></tr></tbody></table>
+      <p>The sync ran on one repository first, which caught two bugs in the sync script before they could touch twenty. A second audit run came back with zero drift.</p>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="pipe">
+    <h2 id="pipe">One pipeline, configured per repository</h2>
+    <div>
+
+      <p>Each repository now carries two small files. Everything else lives in a shared library that every job loads.</p>
+<pre class="code-block">// Jenkinsfile
+@Library('platform-pipeline-library@v1.1.8') _
+gitopsPipeline()
+
+# cicd/config.yml
+project: &lt;project&gt;
+application:
+  name: &lt;service&gt;
+docker:
+  dockerfile: Dockerfile
+  context: .</pre>
+      <ol class="steps"><li><strong>Detect version.</strong> For production, HEAD must carry a semver tag, or the build stops here.</li><li><strong>Build</strong> the Docker image.</li><li><strong>Push</strong> it to the registry (SWR).</li><li><strong>Manual approval</strong>, production only, with the approver recorded.</li><li><strong>Update the manifest repo</strong>: clone, bump the image tag, commit and push.</li><li><strong>ArgoCD</strong> sees the commit and syncs the cluster. Rolling back is a <code>git revert</code>.</li></ol>
+      <p>The library is versioned and pinned in each Jenkinsfile, so a fix reaches every service, but only when its version is bumped on purpose.</p>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="two">
+    <h2 id="two">Two productions without collisions</h2>
+    <div>
+<h3>A branch is not an environment</h3><p>A per-project config maps branches to environments, for example <code>master-cloud</code> to <code>production-cloud</code>. The safety checks look at the environment: anything starting with <code>production</code> needs a tag and an approval. Renaming a branch can’t quietly switch the gate off.</p>
+<h3>master stays for on-premise</h3><p>The old jobs hard-code <code>master</code> and still serve live traffic. The cloud builds from a new <code>master-cloud</code> branch, so neither side can break the other. Cleaning up <code>master</code> waits until on-premise is retired.</p>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="rollout">
+    <h2 id="rollout">Rolling it out to dozens of services</h2>
+    <div>
+<ul class="dash"><li><strong>One pilot end to end</strong>: tag, build, registry, approval, manifest commit, ArgoCD sync, pod running. Only then the rest.</li><li><strong>Scripts for the repetitive parts</strong>: create the cloud branch and pipeline files per repository, and clone Jenkins jobs from the pilot through the API.</li><li><strong>One script bumped the library version</strong> in 37 Jenkinsfiles at once.</li><li><strong>A Groovy script in the Jenkins console</strong> moved 38 jobs from an IP-based GitLab address to its domain, run as a dry run first.</li><li><strong>The new Jenkins</strong> runs with Docker Compose on a private cloud VM, reachable only over the VPN.</li></ul>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="lessons">
+    <h2 id="lessons">What I learned</h2>
+    <div>
+<h3>The audit is the cheapest step</h3><p>Finding 13 drifted repositories before building anything meant no stale code went to production.</p>
+<h3>Pilot, then scale</h3><p>One repository surfaced bugs that would otherwise have been in twenty.</p>
+<h3>Guard environments, not branch names</h3><p>Branch naming is a team convention and will change. Protection tied to the environment survives that.</p>
+<h3>A red build can be the right result</h3><p>Untagged commits stop at version detection on purpose. Dozens of red builds after a bulk change were expected, and nothing reached production.</p>
+    </div>
+  </section>
+
+<section class="case-end" aria-label="More case studies">
+    <div>
+      <p class="next-label">Next case study</p>
+      <a class="next-link" href="../case-ops/index.html">
+        <strong>Running inherited infrastructure alone</strong>
+        <span>Three RKE2 clusters, per-environment gateways and a WAF/IPS edge, run by one person.</span>
+      </a>
+    </div>
+    <nav aria-label="All case studies">
+      <p class="next-label">All case studies</p>
+      <ol class="case-index"><li><a href="../case-huawei/index.html">On-premise to Huawei Cloud</a></li><li><a href="../case-cicd/index.html" aria-current="page">Rebuilding CI/CD for 100+ repositories</a></li><li><a href="../case-ops/index.html">Running inherited infrastructure alone</a></li><li><a href="../case-k8s/index.html">Production Kubernetes with RKE2</a></li><li><a href="../case-galera/index.html">MariaDB Galera behind HAProxy</a></li><li><a href="../case-monitoring/index.html">Alerts that reach the right person</a></li></ol>
+    </nav>
+  </section>
+
+</main>
+
+<footer class="cs-contact">
+  <div class="wrap">
+    <div class="cs-contact-grid">
+      <div>
+        <h2 class="h2">Is your pipeline a pile of scripts on one server?</h2>
+        <p>I can audit what you have, design one pipeline and roll it out without stopping releases. I’m open to freelance, consulting and full-time remote work.</p>
+        <a class="contact-mail" href="mailto:novalramdani.work@gmail.com?subject=Hi%20Noval">novalramdani.work@gmail.com</a>
+      </div>
+      <ul class="cs-links">
+        <li><a href="https://linkedin.com/in/noval-ramdani" target="_blank" rel="noopener"><b>LinkedIn</b><span>/in/noval-ramdani</span></a></li>
+        <li><a href="https://www.upwork.com/freelancers/~01270d3c2bfab0e216?mp_source=share" target="_blank" rel="noopener"><b>Upwork</b><span>Hire me for a project</span></a></li>
+        <li><a href="../index.html"><b>Home</b><span>Experience and toolbox</span></a></li>
+      </ul>
+    </div>
+    <div class="foot"><span>© 2026 Noval Ramdani</span><span>Jakarta, Indonesia</span></div>
+  </div>
+</footer>
+<script src="../assets/scenes.js" defer></script>
+</body>
+</html>

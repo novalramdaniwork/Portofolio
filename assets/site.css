@@ -418,3 +418,7 @@ ol.steps li::marker { font-weight: 700; }
 @media (max-width: 560px) {
   .tool-grid { grid-template-columns: 1fr; }
 }
+.ccard-flip .ccard-art { order: 2; }
+@media (max-width: 900px) { .ccard-flip .ccard-art { order: 0; } }
+.ccard-flip .ccard-art { aspect-ratio: 2 / 1; }
+.ccard-flip .ccard-art img { width: 96%; height: 96%; }
